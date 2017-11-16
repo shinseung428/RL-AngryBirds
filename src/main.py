@@ -10,6 +10,7 @@ import pymunk as pm
 from characters import Bird
 from level import Level
 
+from agent import Agent
 
 
 #Game setting 
@@ -341,6 +342,13 @@ fps_controller = 50
 
 
 ##Agent setting
+screen_dim = pygame.surfarray.array3d(screen).shape
+
+slingshot_agent = Agent(screen_w=screen_dim[0],
+                        screen_h=screen_dim[1],
+                        channel=screen_dim[2]
+                        )
+input('p')
 states = []
 actions = []
 rewards = []
@@ -470,7 +478,6 @@ while running:
     #automatically restart failed level
     if game_state == 3:
         # Restart in the failed level screen
-        # if x_mouse > 500 and x_mouse < 620 and y_mouse > 450:
         restart()
         level.load_level()
         game_state = 0
@@ -480,7 +487,6 @@ while running:
     #if level passed, automatically move on to the next level
     if game_state == 4:
         # Build next level
-        # if x_mouse > 610 and y_mouse > 450:
         restart()
         level.number += 1
         game_state = 0
@@ -488,13 +494,7 @@ while running:
         score = 0
         bird_path = []
         bonus_score_once = True
-        # if x_mouse < 610 and x_mouse > 500 and y_mouse > 450:
-        #     # Restart in the level cleared screen
-        #     restart()
-        #     level.load_level()
-        #     game_state = 0
-        #     bird_path = []
-        #     score = 0
+
 
     #agent doesn't get actions from human
     # x_mouse, y_mouse = pygame.mouse.get_pos()
@@ -516,9 +516,6 @@ while running:
         for i in range(level.number_of_birds-1):
             x = 100 - (i*35)
             screen.blit(redbird, (x, 508))
-
-
-
     # Draw sling behavior
     if mouse_pressed and level.number_of_birds > 0:
         sling_action()
@@ -618,11 +615,12 @@ while running:
     clock.tick(fps_controller)
     pygame.display.set_caption("fps: " + str(clock.get_fps()))
 
-    states.append(state)
-    actions.append(action)
-    rewards.append(score)
+    if level.number_of_birds:
+        states.append(state)
+        actions.append(action)
+        rewards.append(score)
 
-    
+
 
 
 
