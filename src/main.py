@@ -320,9 +320,16 @@ level = Level(pigs, columns, beams, space)
 level.number = 6
 level.load_level()
 
+
+###Setup of the agent
+
+###
+
 while running:
     # Input handling
     for event in pygame.event.get():
+
+        ##check if any key is pressed 
         if event.type == pygame.QUIT:
             running = False
         elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
@@ -342,6 +349,10 @@ while running:
         elif event.type == pygame.KEYDOWN and event.key == pygame.K_n:
             space.gravity = (0.0, -700.0)
             level.bool_space = False
+
+
+
+
         if (pygame.mouse.get_pressed()[0] and x_mouse > 100 and
                 x_mouse < 250 and y_mouse > 370 and y_mouse < 550):
             mouse_pressed = True
@@ -364,19 +375,21 @@ while running:
                     birds.append(bird)
                 if level.number_of_birds == 0:
                     t2 = time.time()
+
         if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
-            if (x_mouse < 60 and y_mouse < 155 and y_mouse > 90):
-                game_state = 1
-            if game_state == 1:
-                if x_mouse > 500 and y_mouse > 200 and y_mouse < 300:
-                    # Resume in the paused screen
-                    game_state = 0
-                if x_mouse > 500 and y_mouse > 300:
-                    # Restart in the paused screen
-                    restart()
-                    level.load_level()
-                    game_state = 0
-                    bird_path = []
+            ###DISABLE PAUSE BUTTON
+            # if (x_mouse < 60 and y_mouse < 155 and y_mouse > 90):
+            #     game_state = 1
+            # if game_state == 1:
+            #     if x_mouse > 500 and y_mouse > 200 and y_mouse < 300:
+            #         # Resume in the paused screen
+            #         game_state = 0
+            #     if x_mouse > 500 and y_mouse > 300:
+            #         # Restart in the paused screen
+            #         restart()
+            #         level.load_level()
+            #         game_state = 0
+            #         bird_path = []
             if game_state == 3:
                 # Restart in the failed level screen
                 if x_mouse > 500 and x_mouse < 620 and y_mouse > 450:
@@ -402,7 +415,15 @@ while running:
                     game_state = 0
                     bird_path = []
                     score = 0
+
+
     x_mouse, y_mouse = pygame.mouse.get_pos()
+
+
+
+
+
+
     # Draw background
     screen.fill((130, 200, 100))
     screen.blit(background2, (0, -50))
@@ -501,10 +522,13 @@ while running:
     else:
         screen.blit(number_font, (1060, 130))
     screen.blit(pause_button, (10, 90))
-    # Pause option
-    if game_state == 1:
-        screen.blit(play_button, (500, 200))
-        screen.blit(replay_button, (500, 300))
+
+    #Disable Pause button
+    # # Pause option
+    # if game_state == 1:
+    #     screen.blit(play_button, (500, 200))
+    #     screen.blit(replay_button, (500, 300))
+    
     draw_level_cleared()
     draw_level_failed()
     pygame.display.flip()
