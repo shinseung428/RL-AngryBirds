@@ -1,6 +1,6 @@
-Angry Birds in Python
+Angry Birds usinsg Q-Learning
 ========
-[Youtube Video](https://www.youtube.com/watch?v=B7G5JtCFepE&feature=youtu.be)
+<!-- [Youtube Video](https://www.youtube.com/watch?v=B7G5JtCFepE&feature=youtu.be)
 
 ![Alt text](/resources/images/angry-birds-image.png?raw=true "angry-birds")
 
@@ -27,4 +27,4 @@ Both Pygame and Pymunk can be installed with pip `pip install pymunk pygame`
 The project is Open Source. Feel free to contribute.
 
 ### To contribute
-Pull a new topic branch to the develop branch.
+Pull a new topic branch to the develop branch. -->
