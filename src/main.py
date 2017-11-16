@@ -329,33 +329,34 @@ while running:
     # Input handling
     for event in pygame.event.get():
 
-        ##check if any key is pressed 
-        if event.type == pygame.QUIT:
-            running = False
-        elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-            running = False
-        elif event.type == pygame.KEYDOWN and event.key == pygame.K_w:
-            # Toggle wall
-            if wall:
-                space.remove(static_lines1)
-                wall = False
-            else:
-                space.add(static_lines1)
-                wall = True
+        ##check if any key is pressed(DISABLED)
+        # if event.type == pygame.QUIT:
+        #     running = False
+        # elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+        #     running = False
+        # elif event.type == pygame.KEYDOWN and event.key == pygame.K_w:
+        #     # Toggle wall
+        #     if wall:
+        #         space.remove(static_lines1)
+        #         wall = False
+        #     else:
+        #         space.add(static_lines1)
+        #         wall = True
 
-        elif event.type == pygame.KEYDOWN and event.key == pygame.K_s:
-            space.gravity = (0.0, -10.0)
-            level.bool_space = True
-        elif event.type == pygame.KEYDOWN and event.key == pygame.K_n:
-            space.gravity = (0.0, -700.0)
-            level.bool_space = False
-
-
+        # elif event.type == pygame.KEYDOWN and event.key == pygame.K_s:
+        #     space.gravity = (0.0, -10.0)
+        #     level.bool_space = True
+        # elif event.type == pygame.KEYDOWN and event.key == pygame.K_n:
+        #     space.gravity = (0.0, -700.0)
+        #     level.bool_space = False
 
 
+
+        ##Action definition starts from here
         if (pygame.mouse.get_pressed()[0] and x_mouse > 100 and
                 x_mouse < 250 and y_mouse > 370 and y_mouse < 550):
             mouse_pressed = True
+
         if (event.type == pygame.MOUSEBUTTONUP and
                 event.button == 1 and mouse_pressed):
             # Release new bird
@@ -375,6 +376,8 @@ while running:
                     birds.append(bird)
                 if level.number_of_birds == 0:
                     t2 = time.time()
+
+
 
         if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
             ###DISABLE PAUSE BUTTON
@@ -421,8 +424,7 @@ while running:
 
 
 
-
-
+    ### End of action setting
 
     # Draw background
     screen.fill((130, 200, 100))
@@ -529,8 +531,12 @@ while running:
     #     screen.blit(play_button, (500, 200))
     #     screen.blit(replay_button, (500, 300))
     
+
+
     draw_level_cleared()
     draw_level_failed()
     pygame.display.flip()
     clock.tick(50)
     pygame.display.set_caption("fps: " + str(clock.get_fps()))
+
+
