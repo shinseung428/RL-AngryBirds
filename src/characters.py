@@ -8,6 +8,7 @@ class Bird():
         mass = 5
         radius = 12
         inertia = pm.moment_for_circle(mass, 0, radius, (0, 0))
+        self.inertia = inertia
         body = pm.Body(mass, inertia)
         body.position = x, y
         power = distance * 53

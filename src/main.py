@@ -250,7 +250,7 @@ def restart():
 
 def post_solve_bird_pig(arbiter, space, _):
     """Collision between bird and pig"""
-    surface=screen
+    surface = screen
     a, b = arbiter.shapes
     bird_body = a.body
     pig_body = b.body
@@ -321,17 +321,16 @@ level.number = 6
 level.load_level()
 
 
+ready_flag = True
+
 ###Setup of the agent
-
-###
-
 while running:
     # Input handling
     for event in pygame.event.get():
 
         ##check if any key is pressed(DISABLED)
-        # if event.type == pygame.QUIT:
-        #     running = False
+        if event.type == pygame.QUIT:
+            running = False
         # elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
         #     running = False
         # elif event.type == pygame.KEYDOWN and event.key == pygame.K_w:
@@ -356,6 +355,7 @@ while running:
         if (pygame.mouse.get_pressed()[0] and x_mouse > 100 and
                 x_mouse < 250 and y_mouse > 370 and y_mouse < 550):
             mouse_pressed = True
+
 
         if (event.type == pygame.MOUSEBUTTONUP and
                 event.button == 1 and mouse_pressed):
@@ -420,8 +420,8 @@ while running:
                     score = 0
 
 
+    #agent doesn't get actions from human
     x_mouse, y_mouse = pygame.mouse.get_pos()
-
 
 
     ### End of action setting
@@ -440,6 +440,10 @@ while running:
         for i in range(level.number_of_birds-1):
             x = 100 - (i*35)
             screen.blit(redbird, (x, 508))
+
+
+
+
     # Draw sling behavior
     if mouse_pressed and level.number_of_birds > 0:
         sling_action()
@@ -531,11 +535,11 @@ while running:
     #     screen.blit(play_button, (500, 200))
     #     screen.blit(replay_button, (500, 300))
     
-
-
     draw_level_cleared()
     draw_level_failed()
     pygame.display.flip()
+
+    #controls the frame rate
     clock.tick(50)
     pygame.display.set_caption("fps: " + str(clock.get_fps()))
 
