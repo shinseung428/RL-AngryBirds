@@ -10,7 +10,10 @@ import pymunk as pm
 from characters import Bird
 from level import Level
 
+import sys
+sys.path.insert(0, './agent')
 from agent import Agent
+from config import * 
 
 
 #Game setting 
@@ -342,18 +345,13 @@ fps_controller = 50
 
 
 ##Agent setting
-screen_dim = pygame.surfarray.array3d(screen).shape
+config = get_config()
+slingshot_agent = Agent(config)
 
-slingshot_agent = Agent(screen_w=screen_dim[0],
-                        screen_h=screen_dim[1],
-                        channel=screen_dim[2]
-                        )
-input('p')
+
 states = []
 actions = []
 rewards = []
-
-
 ###Setup of the agent
 while running:
     pygame.event.get()

@@ -3,16 +3,14 @@ import numpy as np
 import tensorflow as tf
 
 class Agent():
-	def __init__(self, 
-				 screen_w, screen_h, channel
-				 ):
+	def __init__(self,config):
 
 
-		self.screen_w, self.screen_h, self.channel = (screen_w, screen_h, channel)
-		self.batch_size = 64
+		self.screen_w, self.screen_h, self.channel = (config.screen_w, config.screen_h, config.channel_dim)
+		self.batch_size = config.batch_size
 
 		self.input_shape = [self.batch_size, self.screen_w, self.screen_h, self.channel]
-		self.output_dim = 6
+		self.action_num = config.action_num
 		
 		self.learning_rate = 0.001 
 
