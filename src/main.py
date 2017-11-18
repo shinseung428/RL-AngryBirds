@@ -345,9 +345,8 @@ fps_controller = 50
 
 
 ##Agent setting
-config = get_config()
 slingshot_agent = Agent(config)
-
+input('agent created')
 
 states = []
 actions = []
@@ -612,6 +611,7 @@ while running:
     #controls the frame rate
     clock.tick(fps_controller)
     pygame.display.set_caption("fps: " + str(clock.get_fps()))
+
 
     if level.number_of_birds:
         states.append(state)

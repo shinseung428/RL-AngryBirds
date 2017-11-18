@@ -1,6 +1,7 @@
 
 import numpy as np
 import tensorflow as tf
+from architecture import *
 
 class Agent():
 	def __init__(self,config):
@@ -12,7 +13,7 @@ class Agent():
 		self.input_shape = [self.batch_size, self.screen_w, self.screen_h, self.channel]
 		self.action_num = config.action_num
 		
-		self.learning_rate = 0.001 
+		self.learning_rate = config.learning_rate 
 
 		self.build_model()
 		self.build_loss()
@@ -35,7 +36,6 @@ class Agent():
 	def build_model(self):
 
 		self.input = tf.placeholder(tf.float32, shape=self.input_shape)
-
 		self.actions = self.Policy_Network(self.input)
 
 		print "Created slingshot model ..."
@@ -45,8 +45,27 @@ class Agent():
 		print "Created loss ..."
 
 
-	def Policy_Network(self, input):
+	def Policy_Network(self, input, name="policy_network"):
 
-		net = []
+		with tf.variable_scope(name): 
+			net = []
+			conv1 = conv2d(input, self.channel, 512, 3, 2, name='conv1')
+			#add batch norm
+			net.append(conv1)
 
-		return self.output_dim
+			conv2 = conv2d(conv1, 512, 256, 3, 2, name='conv2')
+			#add batch norm
+			net.append(conv2)
+
+			conv3 = conv2d(conv2, 256, 128, 3, 2, name='conv3')
+			#add batch norm
+			net.append(conv3)
+
+			conv4 = conv2d(conv3, 128, 64, 3, 2, name='conv4')
+			#add batch norm
+			net.append(conv4)
+
+			#implement fc layer
+			output = conv4
+
+			return net, output

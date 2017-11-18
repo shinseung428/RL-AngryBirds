@@ -13,8 +13,8 @@ parser.add_argument('--action_num', dest='action_num', default=6, help='number o
 parser.add_argument('--batch_size', dest='batch_size', default=1, help='batch size')
 parser.add_argument('--learning_rate', dest='learning_rate', default=0.001, help='learning rate')
 
-args = parser.parse_args()
+config = parser.parse_args()
 #============================================================================================
 
-def get_config():
-    return args
+# def get_config():
+#     return args
