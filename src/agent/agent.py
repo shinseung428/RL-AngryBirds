@@ -14,24 +14,65 @@ class Agent():
 		self.action_num = config.action_num
 		
 		self.learning_rate = config.learning_rate 
+		self.epsilon = config.epsilon
 
 		self.build_model()
 		self.build_loss()
 
 		
 	def update_model(self, batch_data):
-		states, actions, rewards = batch_data
+		states, actions, rewards = zip(*batch_data)
 
 
-	def make_action(self, state):
-	# possible action list:
-	# 0 : mouseON and move + towards x axis
-	# 1 : mouseON and move - towards x axis
-	# 2 : mouseON and move + towards y axis
-	# 3 : mouseON and move - towards y axis
-	# 4 : mouse UP (resets xy position to the center of the slingshot)
-	# 5 : do nothing
-		pass
+
+	def get_action(self, state, x_mouse, y_mouse, mouse_pressed):
+		# possible action list:
+		# 0 : mouseON and move + towards x axis
+		# 1 : mouseON and move - towards x axis
+		# 2 : mouseON and move + towards y axis
+		# 3 : mouseON and move - towards y axis
+		# 4 : mouse UP (resets xy position to the center of the slingshot)
+		# 5 : do nothing
+			    #Selecting actions without delay 
+	    #select random action
+	    xy_distance = 5
+	    if self.epsilon > np.random.uniform(0,1):
+	    	action = 5
+	    else:
+	    	action = np.random.randint(6, size=(1))[0]
+	    
+
+	    if action == 0:
+	        mouse_pressed = True
+	        x_mouse += xy_distance
+	    elif action == 1:
+	        mouse_pressed = True
+	        x_mouse -= xy_distance
+	    elif action == 2:
+	        mouse_pressed = True
+	        y_mouse += xy_distance
+	    elif action == 3:
+	        mouse_pressed = True
+	        y_mouse -= xy_distance
+	    elif action == 4:
+	        mouse_pressed = False
+	        #reset the position of the mouse to the center point of the slingshot
+	        x_mouse, y_mouse = (130, 426)
+	    elif action == 5:#do nothing
+	        pass
+
+	    #bound the movement of the mouse
+	    if x_mouse < 100:
+	        x_mouse = 100
+	    if x_mouse > 250:
+	        x_mouse = 250
+	    if y_mouse < 370:
+	        y_mouse = 370
+	    if y_mouse > 550:
+	        y_mouse = 550
+
+	    return action, x_mouse, y_mouse, mouse_pressed
+
 
 	def build_model(self):
 
@@ -67,5 +108,4 @@ class Agent():
 
 			#implement fc layer
 			output = conv4
-
 			return net, output

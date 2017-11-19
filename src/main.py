@@ -330,8 +330,8 @@ level.number = 6
 level.load_level()
 
 
+#######newly added config for the game#######
 redbird_init_pos = (130, 426)
-
 ready_flag = True
 mouse_pressed = False
 xy_distance = 5
@@ -342,16 +342,17 @@ delay_timer = 10000.0
 wait_point = 9999
 fps_controller = 50
 
+#############################################
 
-
-##Agent setting
+#######Agent setting#######
 slingshot_agent = Agent(config)
-input('agent created')
+# input('agent created')
 
-states = []
-actions = []
-rewards = []
-###Setup of the agent
+states, actions, rewards = [], [], []
+###########################
+epoch = 0
+batch_counter = 0
+#Start game model
 while running:
     pygame.event.get()
 
@@ -377,10 +378,6 @@ while running:
     # elif event.type == pygame.KEYDOWN and event.key == pygame.K_n:
     #     space.gravity = (0.0, -700.0)
     #     level.bool_space = False
-
-
-    #get pygame screen data into numpy array
-    state = pygame.surfarray.array3d(screen)
 
 
     ##Action definition starts from here
@@ -411,38 +408,12 @@ while running:
     #     mouse_pressed = True
     
 
-    #Selecting actions without delay 
-    #select random action
-    action = np.random.randint(6, size=(1))[0]
-    if action == 0:
-        mouse_pressed = True
-        x_mouse += xy_distance
-    elif action == 1:
-        mouse_pressed = True
-        x_mouse -= xy_distance
-    elif action == 2:
-        mouse_pressed = True
-        y_mouse += xy_distance
-    elif action == 3:
-        mouse_pressed = True
-        y_mouse -= xy_distance
-    elif action == 4:
-        mouse_pressed = False
-        #reset the position of the mouse to the center point of the slingshot
-        x_mouse, y_mouse = redbird_init_pos
-    elif action == 5:#do nothing
-        continue 
+    #read current state(screen input)
+    #get pygame screen data into numpy array
+    state = pygame.surfarray.array3d(screen)
+    action, x_mouse, y_mouse, mouse_pressed = slingshot_agent.get_action(state, x_mouse, y_mouse, mouse_pressed)
 
-    #bound the movement of the mouse
-    if x_mouse < 100:
-        x_mouse = 100
-    if x_mouse > 250:
-        x_mouse = 250
-    if y_mouse < 370:
-        y_mouse = 370
-    if y_mouse > 550:
-        y_mouse = 550
-    
+    print action, x_mouse, y_mouse
 
     #original action definition
     # if (pygame.mouse.get_pressed()[0] and x_mouse > 100 and
@@ -613,12 +584,19 @@ while running:
     pygame.display.set_caption("fps: " + str(clock.get_fps()))
 
 
-    if level.number_of_birds:
-        states.append(state)
-        actions.append(action)
-        rewards.append(score)
+    # if level.number_of_birds:
+    states.append(state)
+    actions.append(action)
+    rewards.append(score)
 
+    #make update if batch is filled
+    if batch_counter % config.batch_size == 0:
+        zipped_batch = zip(states,actions,rewards)
+        slingshot_agent.update_model(zipped_batch)
+        states, actions, rewards = [], [], []
+        epoch += 1
+        batch_counter = 0
 
-
-
+    print("epoch: [%d] counter: [%d]" % (epoch, batch_counter))
+    batch_counter += 1
 
