@@ -91,19 +91,20 @@ class Agent():
 		with tf.variable_scope(name): 
 			net = []
 			conv1 = conv2d(input, self.channel, 512, 3, 2, name='conv1')
-			#add batch norm
+			conv1 = batch_norm(conv1, name='bn1')
+			conv1 = tf.nn.relu(conv1)
 			net.append(conv1)
 
 			conv2 = conv2d(conv1, 512, 256, 3, 2, name='conv2')
-			#add batch norm
+			conv1 = batch_norm(conv2, name='bn2')
 			net.append(conv2)
 
 			conv3 = conv2d(conv2, 256, 128, 3, 2, name='conv3')
-			#add batch norm
+			conv3 = batch_norm(conv3, name='bn3')
 			net.append(conv3)
 
 			conv4 = conv2d(conv3, 128, 64, 3, 2, name='conv4')
-			#add batch norm
+			conv4 = batch_norm(conv4, name='bn4')
 			net.append(conv4)
 
 			#implement fc layer
