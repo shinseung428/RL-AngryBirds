@@ -4,6 +4,7 @@ import math
 import time
 import pygame
 import numpy as np
+import cv2
 
 current_path = os.getcwd()
 import pymunk as pm
@@ -347,7 +348,6 @@ fps_controller = 50
 #######Agent setting#######
 def process_rewards(rews):
     """Rewards -> Advantages for one episode. """
-
     # total reward: length of episode
     return [len(rews)] * len(rews)
 
@@ -358,7 +358,7 @@ states, actions, rewards = [], [], []
 ###########################
 batches = []
 epoch = 0
-batch_counter = 0
+game_counter = 0
 #Start game model
 while running:
     pygame.event.get()
@@ -418,6 +418,8 @@ while running:
     #read current state(screen input)
     #get pygame screen data into numpy array
     state = pygame.surfarray.array3d(screen)
+    state = cv2.resize(state, (config.screen_h, config.screen_w))
+
     action, x_mouse, y_mouse, mouse_pressed = slingshot_agent.get_action(state, x_mouse, y_mouse, mouse_pressed)
 
 
@@ -576,13 +578,13 @@ while running:
 
 
     #check if episode finished
-    if game_state == 3 or game_state == 4:
+    if game_state == 3 or game_state == 4 or len(states) == config.batch_size:
         processed_rewards = process_rewards(rewards)
-        zipped_batch = zip(states,actions,processed_rewards)
-        batches.append(zipped_batch)
-        if len(batches) == config.batch_size:
-            slingshot_agent.update_model(batches)
 
+        if len(states) == config.batch_size:
+            loss = slingshot_agent.update_model(states, actions, processed_rewards)
+            print loss
+            input('teste')
             #empty batch of episodes
             batches = []
             epoch += 1
@@ -609,3 +611,5 @@ while running:
             bonus_score_once = True
 
         states, actions, rewards = [], [], []
+        game_counter += 1
+        print "episode step : %d" % game_counter

@@ -14,16 +14,30 @@ class Agent():
 		self.action_num = config.action_num
 		
 		self.learning_rate = config.learning_rate 
+		self.momentum = config.momentum
 		self.epsilon = config.epsilon
+
+		self.logpoint = config.logpath
+		self.modelpath = config.modelpath
+
 
 		self.build_model()
 		self.build_loss()
 
-		
-	def update_model(self, batch_data):
-		# states, actions, rewards = zip(*batch_data)
-		pass
+		self.sess = tf.Session()
+		self.sess.run(tf.global_variables_initializer())
 
+	def update_model(self, states, actions, advantages):
+		#normalize rewards
+		advantages = (advantages - np.mean(advantages)) / (np.std(advantages) + 1e-10)
+
+		batch_feed = {self.input_state: states,
+					  self.input_act: actions,
+					  self.input_adv: advantages}
+		loss, _ = self.sess.run([self.loss, self.train], feed_dict=batch_feed)
+
+		self.loss = tf.Print(self.loss, [self.loss], )
+		return loss
 
 
 
@@ -40,6 +54,7 @@ class Agent():
 		xy_distance = 5
 		if self.epsilon > np.random.uniform(0,1):
 			action = 5
+			# self.sess.run(self.actions, feed_dict={self.input_state: state})
 		else:
 			action = np.random.randint(6, size=(1))[0]
 
@@ -78,13 +93,31 @@ class Agent():
 
 	def build_model(self):
 
-		self.input = tf.placeholder(tf.float32, shape=self.input_shape)
-		self.actions = self.Policy_Network(self.input)
+		self.input_state = tf.placeholder(tf.float32, shape=self.input_shape)
+		self.net, self.actions = self.Policy_Network(self.input_state)
+
+		self.input_act = tf.placeholder(tf.int32)
+		self.input_adv = tf.placeholder(tf.float32)
+
+		self.trainable_vars = tf.trainable_variables()
 
 		print "Created slingshot model ..."
 
 	
 	def build_loss(self):
+		self.log_prob = tf.log(tf.nn.softmax(self.actions))
+
+		# get log probs of actions from episode
+		indices = tf.range(0, tf.shape(self.log_prob)[0]) * tf.shape(self.log_prob)[1] + self.input_act
+		act_prob = tf.gather(tf.reshape(self.log_prob, [-1]), indices)
+
+		# surrogate loss
+		self.loss = -tf.reduce_sum(tf.multiply(act_prob, self.input_adv))		
+
+		self.optimizer = tf.train.AdamOptimizer(self.learning_rate, beta1=self.momentum, name='AdamOpt')
+		self.train = self.optimizer.minimize(self.loss, var_list=self.trainable_vars)
+
+
 		print "Created loss ..."
 
 
@@ -96,12 +129,12 @@ class Agent():
 			# conv1 = batchnorm(conv1, name='bn1')
 			# conv1 = tf.nn.relu(conv1)
 			# net.append(conv1)
-			conv1 = tf.contrib.layers.conv2d(input, 512, 3, stride=2, scope='conv1')
+			conv1 = tf.contrib.layers.conv2d(input, 512, 5, stride=3, scope='conv1')
 			conv1 = tf.contrib.layers.batch_norm(conv1, scope='bn1')
 			conv1 = tf.nn.relu(conv1)
 			net.append(conv1)
 
-			conv2 = tf.contrib.layers.conv2d(conv1, 256, 3, stride=2, scope='conv2')
+			conv2 = tf.contrib.layers.conv2d(conv1, 256, 5, stride=2, scope='conv2')
 			conv2 = tf.contrib.layers.batch_norm(conv2, scope='bn2')
 			conv2 = tf.nn.relu(conv2)
 			net.append(conv2)
@@ -116,10 +149,10 @@ class Agent():
 			conv4 = tf.nn.relu(conv4)
 			net.append(conv4)
 
-			flattned = tf.contrib.layers.flattned(conv4, scope='flattned')
-			fc1 = tf.contrib.layers.fully_connected(flattned, 128, scope='fc1')
+			flattened = tf.contrib.layers.flatten(conv4, scope='flattened')
+			fc1 = tf.contrib.layers.fully_connected(flattened, 200, scope='fc1')
 			fc2 = tf.contrib.layers.fully_connected(fc1, self.action_num, scope='fc2')
 			#implement fc layer
 			output = fc2
-			
+
 			return net, output
