@@ -345,11 +345,18 @@ fps_controller = 50
 #############################################
 
 #######Agent setting#######
+def process_rewards(rews):
+    """Rewards -> Advantages for one episode. """
+
+    # total reward: length of episode
+    return [len(rews)] * len(rews)
+
 slingshot_agent = Agent(config)
 # input('agent created')
 
 states, actions, rewards = [], [], []
 ###########################
+batches = []
 epoch = 0
 batch_counter = 0
 #Start game model
@@ -413,7 +420,6 @@ while running:
     state = pygame.surfarray.array3d(screen)
     action, x_mouse, y_mouse, mouse_pressed = slingshot_agent.get_action(state, x_mouse, y_mouse, mouse_pressed)
 
-    print action, x_mouse, y_mouse
 
     #original action definition
     # if (pygame.mouse.get_pressed()[0] and x_mouse > 100 and
@@ -441,27 +447,6 @@ while running:
                 birds.append(bird)
             if level.number_of_birds == 0:
                 t2 = time.time()
-
-        
-    #automatically restart failed level
-    if game_state == 3:
-        # Restart in the failed level screen
-        restart()
-        level.load_level()
-        game_state = 0
-        bird_path = []
-        score = 0
-
-    #if level passed, automatically move on to the next level
-    if game_state == 4:
-        # Build next level
-        restart()
-        level.number += 1
-        game_state = 0
-        level.load_level()
-        score = 0
-        bird_path = []
-        bonus_score_once = True
 
 
     #agent doesn't get actions from human
@@ -589,14 +574,38 @@ while running:
     actions.append(action)
     rewards.append(score)
 
-    #make update if batch is filled
-    if batch_counter % config.batch_size == 0:
-        zipped_batch = zip(states,actions,rewards)
-        slingshot_agent.update_model(zipped_batch)
+
+    #check if episode finished
+    if game_state == 3 or game_state == 4:
+        processed_rewards = process_rewards(rewards)
+        zipped_batch = zip(states,actions,processed_rewards)
+        batches.append(zipped_batch)
+        if len(batches) == config.batch_size:
+            slingshot_agent.update_model(batches)
+
+            #empty batch of episodes
+            batches = []
+            epoch += 1
+
+
+        #automatically restart failed level
+        if game_state == 3:
+            # Restart in the failed level screen
+            restart()
+            level.load_level()
+            game_state = 0
+            bird_path = []
+            score = 0
+
+        #if level passed, automatically move on to the next level
+        if game_state == 4:
+            # Build next level
+            restart()
+            level.number += 1
+            game_state = 0
+            level.load_level()
+            score = 0
+            bird_path = []
+            bonus_score_once = True
+
         states, actions, rewards = [], [], []
-        epoch += 1
-        batch_counter = 0
-
-    print("epoch: [%d] counter: [%d]" % (epoch, batch_counter))
-    batch_counter += 1
-
