@@ -87,6 +87,7 @@ bird_path = []
 counter = 0
 restart_counter = False
 bonus_score_once = True
+font = pygame.font.SysFont("arial", 14, bold=True)
 bold_font = pygame.font.SysFont("arial", 30, bold=True)
 bold_font2 = pygame.font.SysFont("arial", 40, bold=True)
 bold_font3 = pygame.font.SysFont("arial", 50, bold=True)
@@ -353,19 +354,18 @@ def process_rewards(rews):
 
 slingshot_agent = Agent(config)
 # input('agent created')
-
+epsilon = config.epsilon
 states, actions, rewards = [], [], []
 ###########################
 batches = []
-epoch = 0
 game_counter = 0
 #Start game model
 while running:
-    pygame.event.get()
+    # event = pygame.event.get()
 
     # Input handling
-    # for event in pygame.event.get():
-    ##check if any key is pressed(DISABLED)
+    for e in pygame.event.get():
+    #check if any key is pressed(DISABLED)
     # if event.type == pygame.QUIT:
     #     running = False
     # elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
@@ -378,13 +378,15 @@ while running:
     #     else:
     #         space.add(static_lines1)
     #         wall = True
-
-    # elif event.type == pygame.KEYDOWN and event.key == pygame.K_s:
-    #     space.gravity = (0.0, -10.0)
-    #     level.bool_space = True
-    # elif event.type == pygame.KEYDOWN and event.key == pygame.K_n:
-    #     space.gravity = (0.0, -700.0)
-    #     level.bool_space = False
+    # for e in event:
+        if e.type == pygame.KEYDOWN and e.key == pygame.K_DOWN:
+            epsilon -= 0.05   
+            if epsilon < 0:
+                epsilon = 0.0
+        elif e.type == pygame.KEYDOWN and e.key == pygame.K_UP:
+            epsilon += 0.05
+            if epsilon > 1:
+                epsilon = 1.0
 
 
     ##Action definition starts from here
@@ -420,7 +422,7 @@ while running:
     state = pygame.surfarray.array3d(screen)
     state = cv2.resize(state, (config.screen_h, config.screen_w))
 
-    action, x_mouse, y_mouse, mouse_pressed = slingshot_agent.get_action(state, x_mouse, y_mouse, mouse_pressed)
+    action, x_mouse, y_mouse, mouse_pressed, output = slingshot_agent.get_action(epsilon, state, x_mouse, y_mouse, mouse_pressed)
 
 
     #original action definition
@@ -464,8 +466,8 @@ while running:
     rect = pygame.Rect(50, 0, 70, 220)
     screen.blit(sling_image, (138, 420), rect)
     # Draw the trail left behind
-    for point in bird_path:
-        pygame.draw.circle(screen, WHITE, point, 5, 0)
+    # for point in bird_path:
+    #     pygame.draw.circle(screen, WHITE, point, 5, 0)
     # Draw the birds in the wait line
     if level.number_of_birds > 0:
         for i in range(level.number_of_birds-1):
@@ -554,13 +556,29 @@ while running:
         screen.blit(number_font, (1100, 130))
     else:
         screen.blit(number_font, (1060, 130))
-    screen.blit(pause_button, (10, 90))
+    # screen.blit(pause_button, (10, 90))
 
     #Disable Pause button
     # # Pause option
     # if game_state == 1:
     #     screen.blit(play_button, (500, 200))
     #     screen.blit(replay_button, (500, 300))
+
+    #Draw game information
+    game_str = font.render("game#:", 1, BLACK)
+    game_num = font.render(str(game_counter), 1, BLACK)
+    screen.blit(game_str, (5,10))
+    screen.blit(game_num, (75,10))
+    game_str = font.render("epsilon:", 1, BLACK)
+    game_num = font.render(str(epsilon), 1, BLACK)
+    screen.blit(game_str, (120,10))
+    screen.blit(game_num, (180,10))    
+    str_output = '[{:s}]'.format(', '.join(['{:.2f}'.format(x) for x in output]))
+    str_output = str_output.replace(',', '       ')
+    actoin_str = font.render("action_prob:     +x           -x            +y          -y        release     do nothing", 1, BLACK)
+    screen.blit(actoin_str, (300, 10))
+    action_prob = font.render(str_output, 1, BLACK)
+    screen.blit(action_prob, (400, 30))
     
     draw_level_cleared()
     draw_level_failed()
@@ -569,25 +587,23 @@ while running:
     #controls the frame rate
     clock.tick(fps_controller)
     pygame.display.set_caption("fps: " + str(clock.get_fps()))
+    
 
+    
 
     # if level.number_of_birds:
     states.append(state)
     actions.append(action)
     rewards.append(score)
 
-
     #check if episode finished
-    if game_state == 3 or game_state == 4 or len(states) == config.batch_size:
+    if len(states) == config.batch_size:
         processed_rewards = process_rewards(rewards)
 
-        if len(states) == config.batch_size:
-            loss = slingshot_agent.update_model(states, actions, processed_rewards)
-            print loss
-            input('teste')
-            #empty batch of episodes
-            batches = []
-            epoch += 1
+        
+        loss = slingshot_agent.update_model(states, actions, processed_rewards, game_counter)
+        print "Games played: [%d] Loss: [%d]" % (game_counter, loss)
+        game_counter += 1
 
 
         #automatically restart failed level
@@ -611,5 +627,5 @@ while running:
             bonus_score_once = True
 
         states, actions, rewards = [], [], []
-        game_counter += 1
-        print "episode step : %d" % game_counter
+
+        

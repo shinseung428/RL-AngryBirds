@@ -15,33 +15,40 @@ class Agent():
 		
 		self.learning_rate = config.learning_rate 
 		self.momentum = config.momentum
-		self.epsilon = config.epsilon
 
-		self.logpoint = config.logpath
+		self.graphpath = config.graphpath
 		self.modelpath = config.modelpath
 
 
 		self.build_model()
 		self.build_loss()
 
+		self.summary = tf.summary.merge([self.loss_graph])
+
 		self.sess = tf.Session()
 		self.sess.run(tf.global_variables_initializer())
 
-	def update_model(self, states, actions, advantages):
+		self.writer = tf.summary.FileWriter(self.graphpath, self.sess.graph)
+
+	def update_model(self, states, actions, advantages, counter):
+		#normalize input
+		states = np.asarray(states, dtype=np.float32)/255.0
 		#normalize rewards
 		advantages = (advantages - np.mean(advantages)) / (np.std(advantages) + 1e-10)
 
 		batch_feed = {self.input_state: states,
 					  self.input_act: actions,
 					  self.input_adv: advantages}
-		loss, _ = self.sess.run([self.loss, self.train], feed_dict=batch_feed)
+		loss, summary, _ = self.sess.run([self.loss, self.summary, self.train], feed_dict=batch_feed)
+		self.writer.add_summary(summary, counter)
 
-		self.loss = tf.Print(self.loss, [self.loss], )
 		return loss
 
 
-
-	def get_action(self, state, x_mouse, y_mouse, mouse_pressed):
+	def get_action(self, epsilon, state, x_mouse, y_mouse, mouse_pressed):
+		def softmax(x):
+			e_x = np.exp(x-np.max(x))
+			return e_x / e_x.sum(axis=0)
 		# possible action list:
 		# 0 : mouseON and move + towards x axis
 		# 1 : mouseON and move - towards x axis
@@ -51,10 +58,16 @@ class Agent():
 		# 5 : do nothing
 			    #Selecting actions without delay 
 		#select random action
-		xy_distance = 5
-		if self.epsilon > np.random.uniform(0,1):
-			action = 5
-			# self.sess.run(self.actions, feed_dict={self.input_state: state})
+		xy_distance = 1
+
+		#replicate state
+		state = np.asarray([state], dtype=np.float32)/255.0
+		input_state = np.repeat(state, self.batch_size, axis=0)
+		output = self.sess.run(self.actions, feed_dict={self.input_state: input_state})
+
+		if epsilon > np.random.uniform(0,1):
+			action = np.argmax(output[0])
+			
 		else:
 			action = np.random.randint(6, size=(1))[0]
 
@@ -88,7 +101,7 @@ class Agent():
 		if y_mouse > 550:
 			y_mouse = 550
 
-		return action, x_mouse, y_mouse, mouse_pressed
+		return action, x_mouse, y_mouse, mouse_pressed, softmax(output[0])
 
 
 	def build_model(self):
@@ -96,10 +109,15 @@ class Agent():
 		self.input_state = tf.placeholder(tf.float32, shape=self.input_shape)
 		self.net, self.actions = self.Policy_Network(self.input_state)
 
+		
 		self.input_act = tf.placeholder(tf.int32)
 		self.input_adv = tf.placeholder(tf.float32)
 
 		self.trainable_vars = tf.trainable_variables()
+
+		# self.layers = []
+		# for idx,net in enumerate(self.net):
+		# 	self.layers.append(tf.summary.image("conv" + str(idx), net[:,:,:,:3]))
 
 		print "Created slingshot model ..."
 
@@ -110,14 +128,20 @@ class Agent():
 		# get log probs of actions from episode
 		indices = tf.range(0, tf.shape(self.log_prob)[0]) * tf.shape(self.log_prob)[1] + self.input_act
 		act_prob = tf.gather(tf.reshape(self.log_prob, [-1]), indices)
+		act_prob_f = tf.cast(act_prob, tf.float32)
 
+
+		act_prob = tf.Print(act_prob_f, [act_prob_f], message="act_prob: ")
+		act_prob = tf.Print(act_prob_f, [indices], message="indices: ")
+		
 		# surrogate loss
-		self.loss = -tf.reduce_sum(tf.multiply(act_prob, self.input_adv))		
+		self.loss = -tf.reduce_sum(tf.multiply(act_prob_f, self.input_adv))		
 
 		self.optimizer = tf.train.AdamOptimizer(self.learning_rate, beta1=self.momentum, name='AdamOpt')
 		self.train = self.optimizer.minimize(self.loss, var_list=self.trainable_vars)
 
 
+		self.loss_graph = tf.summary.scalar("loss", self.loss)
 		print "Created loss ..."
 
 
@@ -125,34 +149,38 @@ class Agent():
 
 		with tf.variable_scope(name): 
 			net = []
-			# conv1 = conv2d(input, self.channel, 512, 3, 2, name='conv1')
-			# conv1 = batchnorm(conv1, name='bn1')
+
+			# conv1 = tf.contrib.layers.conv2d(input, 512, 5, stride=3, scope='conv1')
+			# conv1 = tf.contrib.layers.batch_norm(conv1, scope='bn1')
 			# conv1 = tf.nn.relu(conv1)
 			# net.append(conv1)
-			conv1 = tf.contrib.layers.conv2d(input, 512, 5, stride=3, scope='conv1')
-			conv1 = tf.contrib.layers.batch_norm(conv1, scope='bn1')
-			conv1 = tf.nn.relu(conv1)
-			net.append(conv1)
 
-			conv2 = tf.contrib.layers.conv2d(conv1, 256, 5, stride=2, scope='conv2')
-			conv2 = tf.contrib.layers.batch_norm(conv2, scope='bn2')
-			conv2 = tf.nn.relu(conv2)
-			net.append(conv2)
+			# conv2 = tf.contrib.layers.conv2d(conv1, 256, 5, stride=2, scope='conv2')
+			# conv2 = tf.contrib.layers.batch_norm(conv2, scope='bn2')
+			# conv2 = tf.nn.relu(conv2)
+			# net.append(conv2)
 
-			conv3 = tf.contrib.layers.conv2d(conv2, 128, 3, stride=2, scope='conv3')
-			conv3 = tf.contrib.layers.batch_norm(conv3, scope='bn3')
-			conv3 = tf.nn.relu(conv3)
-			net.append(conv3)
+			# conv3 = tf.contrib.layers.conv2d(conv2, 128, 3, stride=2, scope='conv3')
+			# conv3 = tf.contrib.layers.batch_norm(conv3, scope='bn3')
+			# conv3 = tf.nn.relu(conv3)
+			# net.append(conv3)
 
-			conv4 = tf.contrib.layers.conv2d(conv3, 64, 3, stride=2, scope='conv4')
-			conv4 = tf.contrib.layers.batch_norm(conv4, scope='bn4')
-			conv4 = tf.nn.relu(conv4)
-			net.append(conv4)
+			# conv4 = tf.contrib.layers.conv2d(conv3, 64, 3, stride=2, scope='conv4')
+			# conv4 = tf.contrib.layers.batch_norm(conv4, scope='bn4')
+			# conv4 = tf.nn.relu(conv4)
+			# net.append(conv4)
 
-			flattened = tf.contrib.layers.flatten(conv4, scope='flattened')
-			fc1 = tf.contrib.layers.fully_connected(flattened, 200, scope='fc1')
-			fc2 = tf.contrib.layers.fully_connected(fc1, self.action_num, scope='fc2')
+			flattened = tf.contrib.layers.flatten(input, scope='flattened')
+			fc1 = tf.contrib.layers.fully_connected(flattened, 512, 
+													activation_fn=tf.nn.relu,
+													scope='fc1')
+			fc2 = tf.contrib.layers.fully_connected(fc1, 256, 
+													activation_fn=tf.nn.relu,
+													scope='fc2')
+			fc3 = tf.contrib.layers.fully_connected(fc2, self.action_num, 
+													activation_fn=None,
+													scope='fc3')
 			#implement fc layer
-			output = fc2
+			output = fc3
 
 			return net, output
