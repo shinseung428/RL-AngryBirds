@@ -387,6 +387,14 @@ while running:
             epsilon += 0.05
             if epsilon > 1:
                 epsilon = 1.0
+        elif e.type == pygame.KEYDOWN and e.key == pygame.K_LEFT:
+            fps_controller -= 1
+            if fps_controller < 10:
+                epsilon = 10
+        elif e.type == pygame.KEYDOWN and e.key == pygame.K_RIGHT:
+            fps_controller += 1
+            if fps_controller > 50:
+                fps_controller = 50
 
 
     ##Action definition starts from here
