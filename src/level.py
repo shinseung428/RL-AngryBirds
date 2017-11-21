@@ -62,7 +62,7 @@ class Level():
         pig2 = Pig(985, 182, self.space)
         self.pigs.append(pig1)
         self.pigs.append(pig2)
-        p = (950, 80)
+        p = (950, 80)   
         self.columns.append(Polygon(p, 20, 85, self.space))
         p = (1010, 80)
         self.columns.append(Polygon(p, 20, 85, self.space))

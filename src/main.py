@@ -389,7 +389,8 @@ while running:
     #get pygame screen data into numpy array
     state = pygame.surfarray.array3d(screen)
     state = cv2.resize(state, (config.screen_h, config.screen_w))
-
+    state = np.flip(np.rot90(state, k=-1),1)
+    
     action, x_mouse, y_mouse, mouse_pressed, output = slingshot_agent.get_action(state, x_mouse, y_mouse, mouse_pressed)
 
 
@@ -573,6 +574,8 @@ while running:
             # Build next level
             restart()
             level.number += 1
+            if level.number == 10:
+                level.number = 0
             game_state = 0
             level.load_level()
             score = 0

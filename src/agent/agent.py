@@ -13,7 +13,7 @@ class Agent():
 		self.screen_w, self.screen_h, self.channel = (config.screen_w, config.screen_h, config.channel_dim)
 		self.batch_size = config.batch_size
 
-		self.input_shape = [None, self.screen_w, self.screen_h, self.channel]
+		self.input_shape = [None, self.screen_h, self.screen_w, self.channel]
 		self.action_num = config.action_num
 		
 		self.learning_rate = config.learning_rate 
@@ -26,7 +26,7 @@ class Agent():
 		self.build_model()
 		self.build_loss()
 
-		self.summary = tf.summary.merge([self.loss_graph])
+		self.summary = tf.summary.merge([self.loss_graph,self.layers])
 
 		self.sess = tf.InteractiveSession()
 		self.sess.run(tf.global_variables_initializer())
@@ -121,9 +121,9 @@ class Agent():
 
 		self.trainable_vars = tf.trainable_variables()
 
-		# self.layers = []
-		# for idx,net in enumerate(self.net):
-		# 	self.layers.append(tf.summary.image("conv" + str(idx), net[:,:,:,:3]))
+		self.layers = []
+		for idx,net in enumerate(self.net):
+			self.layers.append(tf.summary.image("conv" + str(idx), net[:,:,:,:3]))
 
 		print "Created slingshot model ..."
 
