@@ -197,7 +197,7 @@ def draw_level_cleared():
     # score_level_cleared = bold_font2.render(str(score), 1, WHITE)
     if level.number_of_birds >= 0 and len(pigs) == 0:
         if bonus_score_once:
-            score += (level.number_of_birds-1) * 10000
+            score += (level.number_of_birds-1) * 10
         bonus_score_once = False
         game_state = 4
         # rect = pygame.Rect(300, 0, 600, 800)
@@ -221,7 +221,8 @@ def draw_level_failed():
     """Draw level failed"""
     global game_state
     failed = bold_font3.render("Level Failed", 1, WHITE)
-    if level.number_of_birds <= 0 and time.time() - t2 > 5 and len(pigs) > 0:
+    # if level.number_of_birds <= 0 and time.time() - t2 > 5 and len(pigs) > 0:
+    if len(pigs) > 0:
         game_state = 3
         # rect = pygame.Rect(300, 0, 600, 800)
         # pygame.draw.rect(screen, BLACK, rect)
@@ -275,7 +276,7 @@ def post_solve_bird_pig(arbiter, space, _):
             pig.life -= 20
             pigs_to_remove.append(pig)
             global score
-            score += 10000
+            score += 10
     for pig in pigs_to_remove:
         space.remove(pig.shape, pig.shape.body)
         pigs.remove(pig)
@@ -299,7 +300,7 @@ def post_solve_bird_wood(arbiter, space, _):
                 beams.remove(poly)
         space.remove(b, b.body)
         global score
-        score += 5000
+        score += 50
 
 
 def post_solve_pig_wood(arbiter, space, _):
@@ -311,7 +312,7 @@ def post_solve_pig_wood(arbiter, space, _):
             if pig_shape == pig.shape:
                 pig.life -= 20
                 global score
-                score += 10000
+                score += 100
                 if pig.life <= 0:
                     pigs_to_remove.append(pig)
     for pig in pigs_to_remove:
@@ -328,7 +329,7 @@ space.add_collision_handler(1, 2).post_solve=post_solve_pig_wood
 
 # load_music()
 level = Level(pigs, columns, beams, space)
-level.number = 6
+level.number = 0
 level.load_level()
 
 
@@ -336,7 +337,6 @@ level.load_level()
 redbird_init_pos = (130, 426)
 ready_flag = True
 mouse_pressed = False
-xy_distance = 5
 
 #wait for 10 seconds after mouse released
 #(not sure if this should be implemented)
@@ -354,7 +354,7 @@ def process_rewards(rews):
 
 slingshot_agent = Agent(config)
 # input('agent created')
-epsilon = config.epsilon
+# epsilon = config.epsilon
 states, actions, rewards = [], [], []
 ###########################
 batches = []
@@ -364,65 +364,25 @@ while running:
     # event = pygame.event.get()
 
     # Input handling
-    for e in pygame.event.get():
-    #check if any key is pressed(DISABLED)
-    # if event.type == pygame.QUIT:
-    #     running = False
-    # elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-    #     running = False
-    # elif event.type == pygame.KEYDOWN and event.key == pygame.K_w:
-    #     # Toggle wall
-    #     if wall:
-    #         space.remove(static_lines1)
-    #         wall = False
-    #     else:
-    #         space.add(static_lines1)
-    #         wall = True
-    # for e in event:
-        if e.type == pygame.KEYDOWN and e.key == pygame.K_DOWN:
-            epsilon -= 0.05   
-            if epsilon < 0:
-                epsilon = 0.0
-        elif e.type == pygame.KEYDOWN and e.key == pygame.K_UP:
-            epsilon += 0.05
-            if epsilon > 1:
-                epsilon = 1.0
-        elif e.type == pygame.KEYDOWN and e.key == pygame.K_LEFT:
-            fps_controller -= 1
-            if fps_controller < 10:
-                epsilon = 10
-        elif e.type == pygame.KEYDOWN and e.key == pygame.K_RIGHT:
-            fps_controller += 1
-            if fps_controller > 50:
-                fps_controller = 50
+    # for e in pygame.event.get():
+    #     if e.type == pygame.KEYDOWN and e.key == pygame.K_DOWN:
+    #         epsilon -= 0.05   
+    #         if epsilon < 0:
+    #             epsilon = 0.0
+    #     elif e.type == pygame.KEYDOWN and e.key == pygame.K_UP:
+    #         epsilon += 0.05
+    #         if epsilon > 1:
+    #             epsilon = 1.0
+    #     elif e.type == pygame.KEYDOWN and e.key == pygame.K_LEFT:
+    #         fps_controller -= 1
+    #         if fps_controller < 10:
+    #             fps_controller = 10
+    #     elif e.type == pygame.KEYDOWN and e.key == pygame.K_RIGHT:
+    #         fps_controller += 1
+    #         if fps_controller > 50:
+    #             fps_controller = 50
 
 
-    ##Action definition starts from here
-    # #Selecting actions with delay 
-    # if time.time()*1000 - wait_point > delay_timer:
-    #     #select random action
-    #     action = np.random.randint(6, size=(1))[0]
-    #     if action == 0:
-    #         mouse_pressed = True
-    #         x_mouse += xy_distance
-    #     elif action == 1:
-    #         mouse_pressed = True
-    #         x_mouse -= xy_distance
-    #     elif action == 2:
-    #         mouse_pressed = True
-    #         y_mouse += xy_distance
-    #     elif action == 3:
-    #         mouse_pressed = True
-    #         y_mouse -= xy_distance
-    #     elif action == 4:
-    #         mouse_pressed = False
-    #         #reset the position of the mouse to the center point of the slingshot
-    #         x_mouse, y_mouse = 150, 450
-    #         wait_point = time.time()*1000
-    #     elif action == 5:#do nothing
-    #         continue 
-    # else:
-    #     mouse_pressed = True
     
 
     #read current state(screen input)
@@ -430,14 +390,7 @@ while running:
     state = pygame.surfarray.array3d(screen)
     state = cv2.resize(state, (config.screen_h, config.screen_w))
 
-    action, x_mouse, y_mouse, mouse_pressed, output = slingshot_agent.get_action(epsilon, state, x_mouse, y_mouse, mouse_pressed)
-
-
-    #original action definition
-    # if (pygame.mouse.get_pressed()[0] and x_mouse > 100 and
-    # if (mouse_ON and x_mouse > 100 and
-    #         x_mouse < 250 and y_mouse > 370 and y_mouse < 550):
-    #     mouse_pressed = True
+    action, x_mouse, y_mouse, mouse_pressed, output = slingshot_agent.get_action(state, x_mouse, y_mouse, mouse_pressed)
 
 
     if not mouse_pressed:
@@ -459,12 +412,6 @@ while running:
                 birds.append(bird)
             if level.number_of_birds == 0:
                 t2 = time.time()
-
-
-    #agent doesn't get actions from human
-    # x_mouse, y_mouse = pygame.mouse.get_pos()
-    ### End of action setting
-    # print pygame.mouse.get_pos()
 
 
     # Draw background
@@ -566,24 +513,18 @@ while running:
         screen.blit(number_font, (1060, 130))
     # screen.blit(pause_button, (10, 90))
 
-    #Disable Pause button
-    # # Pause option
-    # if game_state == 1:
-    #     screen.blit(play_button, (500, 200))
-    #     screen.blit(replay_button, (500, 300))
-
     #Draw game information
     game_str = font.render("game#:", 1, BLACK)
     game_num = font.render(str(game_counter), 1, BLACK)
     screen.blit(game_str, (5,10))
     screen.blit(game_num, (75,10))
-    game_str = font.render("epsilon:", 1, BLACK)
-    game_num = font.render(str(epsilon), 1, BLACK)
-    screen.blit(game_str, (120,10))
-    screen.blit(game_num, (180,10))    
-    str_output = '[{:s}]'.format(', '.join(['{:.2f}'.format(x) for x in output]))
+    # game_str = font.render("epsilon:", 1, BLACK)
+    # game_num = font.render(str(epsilon), 1, BLACK)
+    # screen.blit(game_str, (120,10))
+    # screen.blit(game_num, (180,10))    
+    str_output = '[{:s}]'.format(', '.join(['{:.4f}'.format(x) for x in output]))
     str_output = str_output.replace(',', '       ')
-    actoin_str = font.render("action_prob:     +x           -x            +y          -y        release     do nothing", 1, BLACK)
+    actoin_str = font.render("action_prob:       +x                -x              +y              -y             release     do nothing", 1, BLACK)
     screen.blit(actoin_str, (300, 10))
     action_prob = font.render(str_output, 1, BLACK)
     screen.blit(action_prob, (400, 30))
@@ -598,19 +539,22 @@ while running:
     
 
     
+    label = np.zeros_like(output) ; label[action] = 1
 
-    # if level.number_of_birds:
     states.append(state)
-    actions.append(action)
+    #actions.append(action)
+    actions.append(label)
     rewards.append(score)
+
+
 
     #check if episode finished
     if len(states) == config.batch_size:
-        processed_rewards = process_rewards(rewards)
+        # processed_rewards = process_rewards(rewards)
 
         
-        loss = slingshot_agent.update_model(states, actions, processed_rewards, game_counter)
-        print "Games played: [%d] Loss: [%d]" % (game_counter, loss)
+        loss = slingshot_agent.update_model(states, np.vstack(actions), np.vstack(rewards), game_counter)
+        print "Games played: [%d] Loss: [%f]" % (game_counter, loss)
         game_counter += 1
 
 
@@ -622,6 +566,7 @@ while running:
             game_state = 0
             bird_path = []
             score = 0
+            x_mouse, y_mouse = redbird_init_pos
 
         #if level passed, automatically move on to the next level
         if game_state == 4:
@@ -633,7 +578,10 @@ while running:
             score = 0
             bird_path = []
             bonus_score_once = True
+            x_mouse, y_mouse = redbird_init_pos
 
         states, actions, rewards = [], [], []
+
+
 
         
