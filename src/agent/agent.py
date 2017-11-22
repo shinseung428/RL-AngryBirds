@@ -9,7 +9,6 @@ class Agent():
 		self.gamma = .99               # discount factor for reward
 		self.decay = 0.99    
 
-
 		self.screen_w, self.screen_h, self.channel = (config.screen_w, config.screen_h, config.channel_dim)
 		self.batch_size = config.batch_size
 
@@ -32,6 +31,7 @@ class Agent():
 		self.sess.run(tf.global_variables_initializer())
 
 		self.writer = tf.summary.FileWriter(self.graphpath, self.sess.graph)
+		self.saver = tf.train.Saver()
 
 	def update_model(self, states, actions, advantages, counter):
 		#normalize input
@@ -129,24 +129,6 @@ class Agent():
 
 	
 	def build_loss(self):
-		#VERSION 1
-		# self.log_prob = tf.log(self.actions)
-
-		# # get log probs of actions from episode
-		# indices = tf.range(0, tf.shape(self.log_prob)[0]) * tf.shape(self.log_prob)[1] + self.input_act
-		# act_prob = tf.gather(tf.reshape(self.log_prob, [-1]), indices)
-		# act_prob_f = tf.cast(act_prob, tf.float32)
-
-		# # surrogate loss
-		# self.loss = -tf.reduce_sum(tf.multiply(act_prob_f, self.input_adv))
-
-
-		# self.optimizer = tf.train.AdamOptimizer(self.learning_rate, beta1=self.momentum, name='AdamOpt')
-		# self.train = self.optimizer.minimize(self.loss, var_list=self.trainable_vars)
-
-
-
-		#VERSION 2
 		def tf_discount_rewards(tf_r): #tf_r ~ [game_steps,1]
 		    discount_f = lambda a, v: a*self.gamma + v;
 		    tf_r_reverse = tf.scan(discount_f, tf.reverse(tf_r,[True, False]))
@@ -179,7 +161,7 @@ class Agent():
 			conv1 = tf.nn.relu(conv1)
 			net.append(conv1)
 
-			conv2 = tf.contrib.layers.conv2d(conv1, 256, 5, stride=2, scope='conv2')
+			conv2 = tf.contrib.layers.conv2d(conv1, 256, 3, stride=2, scope='conv2')
 			conv2 = tf.contrib.layers.batch_norm(conv2, scope='bn2')
 			conv2 = tf.nn.relu(conv2)
 			net.append(conv2)
@@ -208,3 +190,11 @@ class Agent():
 			output = tf.nn.softmax(fc3)
 
 			return net, output
+
+	def save(self, num):
+		save_path = self.saver.save(self.sess, self.modelpath, global_step=num)
+
+	def reload(self):
+		latest_chkpt_path = self.saver.recover_last_checkpoints(self.modelpath)
+		self.saver.restore(self.sess, latest_chkpt_path)
+		print 'Reloaded model : ' + latest_chkpt_path

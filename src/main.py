@@ -276,7 +276,7 @@ def post_solve_bird_pig(arbiter, space, _):
             pig.life -= 20
             pigs_to_remove.append(pig)
             global score
-            score += 10
+            score += 1
     for pig in pigs_to_remove:
         space.remove(pig.shape, pig.shape.body)
         pigs.remove(pig)
@@ -300,7 +300,7 @@ def post_solve_bird_wood(arbiter, space, _):
                 beams.remove(poly)
         space.remove(b, b.body)
         global score
-        score += 50
+        score += 5
 
 
 def post_solve_pig_wood(arbiter, space, _):
@@ -312,7 +312,7 @@ def post_solve_pig_wood(arbiter, space, _):
             if pig_shape == pig.shape:
                 pig.life -= 20
                 global score
-                score += 100
+                score += 10
                 if pig.life <= 0:
                     pigs_to_remove.append(pig)
     for pig in pigs_to_remove:
@@ -353,12 +353,17 @@ def process_rewards(rews):
     return [len(rews)] * len(rews)
 
 slingshot_agent = Agent(config)
+
+if config.continue_training:
+    slingshot_agent.reload()
+input('pkd')
 # input('agent created')
 # epsilon = config.epsilon
 states, actions, rewards = [], [], []
 ###########################
 batches = []
 game_counter = 0
+prev_state = None
 #Start game model
 while running:
     # event = pygame.event.get()
@@ -390,8 +395,14 @@ while running:
     state = pygame.surfarray.array3d(screen)
     state = cv2.resize(state, (config.screen_h, config.screen_w))
     state = np.flip(np.rot90(state, k=-1),1)
+
+    if prev_state == None:
+        prev_state = state
     
-    action, x_mouse, y_mouse, mouse_pressed, output = slingshot_agent.get_action(state, x_mouse, y_mouse, mouse_pressed)
+    input_state = state - prev_state
+
+    
+    action, x_mouse, y_mouse, mouse_pressed, output = slingshot_agent.get_action(input_state, x_mouse, y_mouse, mouse_pressed)
 
 
     if not mouse_pressed:
@@ -542,12 +553,12 @@ while running:
     
     label = np.zeros_like(output) ; label[action] = 1
 
-    states.append(state)
+    states.append(input_state)
     #actions.append(action)
     actions.append(label)
     rewards.append(score)
 
-
+    prev_state = state
 
     #check if episode finished
     if len(states) == config.batch_size:
@@ -582,6 +593,11 @@ while running:
             bird_path = []
             bonus_score_once = True
             x_mouse, y_mouse = redbird_init_pos
+
+        if game_counter % config.checkpoint == 0:
+            slingshot_agent.save(game_counter)
+            print 'model saved'
+
 
         states, actions, rewards = [], [], []
 

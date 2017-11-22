@@ -4,8 +4,8 @@ import argparse
 
 parser = argparse.ArgumentParser(description='')
 
-parser.add_argument('--modelpath', dest='modelpath', default='./models', help='model path')
-parser.add_argument('--graphpath', dest='graphpath', default='./graph', help='log path')
+parser.add_argument('--modelpath', dest='modelpath', default='./agent/model/', help='model path')
+parser.add_argument('--graphpath', dest='graphpath', default='./agent/graph', help='log path')
 
 
 #Training Setting
@@ -21,7 +21,8 @@ parser.add_argument('--batch_size', dest='batch_size', default=400, help='batch 
 parser.add_argument('--learning_rate', dest='learning_rate', default=0.001, help='learning rate')
 parser.add_argument('--momentum', dest='momentum', default=0.50, help='momentum')
 
-
+parser.add_argument('--checkpoint', dest='checkpoint', default=50, help='checkpoint')
+parser.add_argument('--continue_training', dest='continue_training', default=False, help='flag to see whether to start new training')
 config = parser.parse_args()
 #============================================================================================
 
