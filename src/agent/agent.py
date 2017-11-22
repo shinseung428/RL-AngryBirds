@@ -93,8 +93,9 @@ class Agent():
 		elif action == 4:
 			mouse_pressed = False
 			#reset the position of the mouse to the center point of the slingshot
-			x_mouse, y_mouse = (130, 426)
+			x_mouse, y_mouse = (130, 450)
 		elif action == 5:#do nothing
+			mouse_pressed = True
 			pass
 
 		#bound the movement of the mouse
@@ -107,7 +108,7 @@ class Agent():
 		if y_mouse > 550:
 			y_mouse = 550
 
-		return action, x_mouse, y_mouse, mouse_pressed, softmax(output[0])
+		return action, x_mouse, y_mouse, mouse_pressed, output[0]
 
 
 	def build_model(self):
@@ -192,9 +193,12 @@ class Agent():
 			return net, output
 
 	def save(self, num):
-		save_path = self.saver.save(self.sess, self.modelpath, global_step=num)
+		save_path = self.saver.save(self.sess, self.modelpath + "slingshotmodel", global_step=num)
 
 	def reload(self):
-		latest_chkpt_path = self.saver.recover_last_checkpoints(self.modelpath)
+		latest_chkpt_path = tf.train.latest_checkpoint(self.modelpath)
 		self.saver.restore(self.sess, latest_chkpt_path)
 		print 'Reloaded model : ' + latest_chkpt_path
+
+		game_steps = int(latest_chkpt_path.split('-')[1])
+		return game_steps

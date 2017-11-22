@@ -140,11 +140,11 @@ def distance(xo, yo, x, y):
     return d
 
 
-def load_music():
-    """Load the music"""
-    song1 = '../resources/sounds/angry-birds.mp3'
-    pygame.mixer.music.load(song1)
-    pygame.mixer.music.play(-1)
+# def load_music():
+#     """Load the music"""
+#     song1 = '../resources/sounds/angry-birds.mp3'
+#     pygame.mixer.music.load(song1)
+#     pygame.mixer.music.play(-1)
 
 
 def sling_action():
@@ -334,9 +334,10 @@ level.load_level()
 
 
 #######newly added config for the game#######
-redbird_init_pos = (130, 426)
+redbird_init_pos = (130, 450)
 ready_flag = True
-mouse_pressed = False
+mouse_pressed = True
+x_mouse, y_mouse = redbird_init_pos
 
 #wait for 10 seconds after mouse released
 #(not sure if this should be implemented)
@@ -354,15 +355,16 @@ def process_rewards(rews):
 
 slingshot_agent = Agent(config)
 
-if config.continue_training:
-    slingshot_agent.reload()
-input('pkd')
+if config.continue_training == 'True':
+    game_counter = slingshot_agent.reload()
+else:
+    game_counter = 0
 # input('agent created')
 # epsilon = config.epsilon
 states, actions, rewards = [], [], []
 ###########################
 batches = []
-game_counter = 0
+
 prev_state = None
 #Start game model
 while running:
@@ -404,11 +406,12 @@ while running:
     
     action, x_mouse, y_mouse, mouse_pressed, output = slingshot_agent.get_action(input_state, x_mouse, y_mouse, mouse_pressed)
 
-
-    if not mouse_pressed:
+    # print action, mouse_pressed
+    
+    if not mouse_pressed:   
         # Release new bird
         mouse_pressed = False
-        x_mouse, y_mouse = redbird_init_pos
+        # x_mouse, y_mouse = redbird_init_pos
         if level.number_of_birds > 0:
             level.number_of_birds -= 1
             t1 = time.time()*1000
@@ -440,12 +443,13 @@ while running:
         for i in range(level.number_of_birds-1):
             x = 100 - (i*35)
             screen.blit(redbird, (x, 508))
+
     # Draw sling behavior
     if mouse_pressed and level.number_of_birds > 0:
         sling_action()
     else:
         if time.time()*1000 - t1 > 1000 and level.number_of_birds > 0:
-            screen.blit(redbird, (130, 426))
+            screen.blit(redbird, redbird_init_pos)
         else:
             pygame.draw.line(screen, (0, 0, 0), (sling_x, sling_y-8),
                              (sling2_x, sling2_y-7), 5)
@@ -579,6 +583,7 @@ while running:
             bird_path = []
             score = 0
             x_mouse, y_mouse = redbird_init_pos
+            mouse_pressed = True
 
         #if level passed, automatically move on to the next level
         if game_state == 4:
@@ -593,6 +598,7 @@ while running:
             bird_path = []
             bonus_score_once = True
             x_mouse, y_mouse = redbird_init_pos
+            mouse_pressed = True
 
         if game_counter % config.checkpoint == 0:
             slingshot_agent.save(game_counter)
@@ -602,5 +608,6 @@ while running:
         states, actions, rewards = [], [], []
 
 
-
+    # cv2.imshow("screen",input_state)
+    # cv2.waitKey()
         
