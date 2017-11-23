@@ -124,10 +124,10 @@ class Level():
         pig = Pig(950, 320, self.space)
         pig.life = 25
         self.pigs.append(pig)
-        pig = Pig(885, 225, self.space)
+        pig = Pig(885, 210, self.space)
         pig.life = 25
         self.pigs.append(pig)
-        pig = Pig(1005, 225, self.space)
+        pig = Pig(1005, 210, self.space)
         pig.life = 25
         self.pigs.append(pig)
         p = (1100, 100)

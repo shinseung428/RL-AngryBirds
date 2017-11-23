@@ -540,7 +540,8 @@ while running:
     # screen.blit(game_num, (180,10))    
     str_output = '[{:s}]'.format(', '.join(['{:.4f}'.format(x) for x in output]))
     str_output = str_output.replace(',', '       ')
-    actoin_str = font.render("action_prob:       +x                -x              +y              -y             release     do nothing", 1, BLACK)
+    #actoin_str = font.render("action_prob:       +x                -x              +y              -y             release     do nothing", 1, BLACK)
+    actoin_str = font.render("action_prob:       -x              +y              release", 1, BLACK)
     screen.blit(actoin_str, (300, 10))
     action_prob = font.render(str_output, 1, BLACK)
     screen.blit(action_prob, (400, 30))
@@ -559,7 +560,7 @@ while running:
 
     states.append(input_state)
     #actions.append(action)
-    actions.append(label)
+    actions.append(action)
     rewards.append(score)
 
     prev_state = state
@@ -572,7 +573,6 @@ while running:
         loss = slingshot_agent.update_model(states, np.vstack(actions), np.vstack(rewards), game_counter)
         print "Games played: [%d] Loss: [%f]" % (game_counter, loss)
         game_counter += 1
-
 
         #automatically restart failed level
         if game_state == 3:

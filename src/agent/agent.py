@@ -33,20 +33,6 @@ class Agent():
 		self.writer = tf.summary.FileWriter(self.graphpath, self.sess.graph)
 		self.saver = tf.train.Saver()
 
-	def update_model(self, states, actions, advantages, counter):
-		#normalize input
-		states = np.asarray(states, dtype=np.float32)/255.0
-		#normalize rewards
-		advantages = (advantages - np.mean(advantages)) / (np.std(advantages) + 1e-10)
-
-		batch_feed = {self.input_state: states,
-					  self.input_act: actions,
-					  self.input_adv: advantages}
-		loss, summary, _ = self.sess.run([self.loss, self.summary, self.train], feed_dict=batch_feed)
-		self.writer.add_summary(summary, counter)
-
-		return loss
-
 
 	def get_action(self, state, x_mouse, y_mouse, mouse_pressed):
 		def softmax(x):
@@ -61,7 +47,7 @@ class Agent():
 		# 5 : do nothing
 			    #Selecting actions without delay 
 		#select random action
-		xy_distance = 1
+		xy_distance = 5
 
 		#replicate state
 		state = np.asarray([state], dtype=np.float32)/255.0
@@ -78,25 +64,45 @@ class Agent():
 		# 	action = np.random.randint(6, size=(1))[0]
 
 
+		# if action == 0:
+		# 	mouse_pressed = True
+		# 	x_mouse += xy_distance
+		# elif action == 1:
+		# 	mouse_pressed = True
+		# 	x_mouse -= xy_distance
+		# elif action == 2:
+		# 	mouse_pressed = True
+		# 	y_mouse += xy_distance
+		# elif action == 3:
+		# 	mouse_pressed = True
+		# 	y_mouse -= xy_distance
+		# elif action == 4:
+		# 	mouse_pressed = False
+		# 	#reset the position of the mouse to the center point of the slingshot
+		# 	x_mouse, y_mouse = (130, 450)
+		# elif action == 5:#do nothing
+		# 	mouse_pressed = True
+		# 	pass
+
 		if action == 0:
 			mouse_pressed = True
-			x_mouse += xy_distance
+			x_mouse -= xy_distance
 		elif action == 1:
 			mouse_pressed = True
-			x_mouse -= xy_distance
-		elif action == 2:
-			mouse_pressed = True
 			y_mouse += xy_distance
-		elif action == 3:
-			mouse_pressed = True
-			y_mouse -= xy_distance
-		elif action == 4:
+		# elif action == 2:
+		# 	mouse_pressed = True
+		# 	y_mouse += xy_distance
+		# elif action == 3:
+		# 	mouse_pressed = True
+		# 	y_mouse -= xy_distance
+		elif action == 2:
 			mouse_pressed = False
 			#reset the position of the mouse to the center point of the slingshot
 			x_mouse, y_mouse = (130, 450)
-		elif action == 5:#do nothing
-			mouse_pressed = True
-			pass
+		# elif action == 5:#do nothing
+		# 	mouse_pressed = True
+		# 	pass		
 
 		#bound the movement of the mouse
 		if x_mouse < 100:
@@ -110,6 +116,19 @@ class Agent():
 
 		return action, x_mouse, y_mouse, mouse_pressed, output[0]
 
+	def update_model(self, states, actions, advantages, counter):
+		#normalize input
+		states = np.asarray(states, dtype=np.float32)/255.0
+		#normalize rewards
+		advantages = (advantages - np.mean(advantages)) / (np.std(advantages) + 1e-10)
+
+		batch_feed = {self.input_state: states,
+					  self.input_act: actions,
+					  self.input_adv: advantages}
+		loss, summary, _ = self.sess.run([self.loss, self.summary, self.train], feed_dict=batch_feed)
+		self.writer.add_summary(summary, counter)
+
+		return loss
 
 	def build_model(self):
 
@@ -117,7 +136,7 @@ class Agent():
 		self.net, self.actions = self.Policy_Network(self.input_state)
 
 		
-		self.input_act = tf.placeholder(tf.float32, shape=[None, self.action_num])
+		self.input_act = tf.placeholder(tf.int32, shape=[None, 1])
 		self.input_adv = tf.placeholder(tf.float32, shape=[None, 1])
 
 		self.trainable_vars = tf.trainable_variables()
@@ -136,15 +155,32 @@ class Agent():
 		    tf_discounted_r = tf.reverse(tf_r_reverse,[True, False])
 		    return tf_discounted_r
 
+		#discount rewards and normalize
 		tf_discounted_epr = tf_discount_rewards(self.input_adv)
 		tf_mean, tf_variance= tf.nn.moments(tf_discounted_epr, [0], shift=None, name="reward_moments")
 		tf_discounted_epr -= tf_mean
 		tf_discounted_epr /= tf.sqrt(tf_variance + 1e-6)
 
-		self.loss = tf.nn.l2_loss(self.input_act - self.actions)
-		self.optimizer = tf.train.RMSPropOptimizer(self.learning_rate, decay=self.decay)
-		tf_grads = self.optimizer.compute_gradients(self.loss, var_list=tf.trainable_variables(), grad_loss=tf_discounted_epr)
-		self.train = self.optimizer.apply_gradients(tf_grads)
+		# self.loss = tf.nn.l2_loss(self.input_act - self.actions)
+		# self.optimizer = tf.train.RMSPropOptimizer(self.learning_rate, decay=self.decay)
+		# tf_grads = self.optimizer.compute_gradients(self.loss, var_list=tf.trainable_variables(), grad_loss=tf_discounted_epr)
+		# self.train = self.optimizer.apply_gradients(tf_grads)
+
+
+		#Another version 
+		log_prob = tf.log(self.actions)
+		indices = tf.range(0, tf.shape(log_prob)[0]) * tf.shape(log_prob)[1] + self.input_act
+		act_prob = tf.gather(tf.reshape(log_prob, [-1]), indices)
+
+
+		self.loss = -tf.reduce_sum(tf.multiply(act_prob, tf_discounted_epr))
+
+		self.loss = tf.Print(self.loss, [act_prob], message='act_prob:')
+		self.loss = tf.Print(self.loss, [tf_discounted_epr], message='epr:')
+
+		optimizer = tf.train.RMSPropOptimizer(self.learning_rate)
+		self.train = optimizer.minimize(self.loss)
+
 
 		self.loss_graph = tf.summary.scalar("loss", self.loss)
 

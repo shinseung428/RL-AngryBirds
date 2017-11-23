@@ -12,7 +12,7 @@ parser.add_argument('--graphpath', dest='graphpath', default='./agent/graph', he
 parser.add_argument('--screen_w', dest='screen_w', default=128, help='input_x width')
 parser.add_argument('--screen_h', dest='screen_h', default=75, help='input_x height')
 parser.add_argument('--channel_dim', dest='channel_dim', default=3, help='channel dimension')
-parser.add_argument('--action_num', dest='action_num', default=6, help='number of actions')
+parser.add_argument('--action_num', dest='action_num', default=3, help='number of actions')
 
 parser.add_argument('--epsilon', dest='epsilon', default=0.10, help='epsilon rate')
 
