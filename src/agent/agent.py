@@ -54,7 +54,6 @@ class Agent():
 		# input_state = np.repeat(state, self.batch_size, axis=0)
 		output = self.sess.run(self.actions, feed_dict={self.input_state: state})
 
-
 		action = np.random.choice(self.action_num, p=output[0])
 
 		# if epsilon > np.random.uniform(0,1):
@@ -105,8 +104,8 @@ class Agent():
 		# 	pass		
 
 		#bound the movement of the mouse
-		if x_mouse < 100:
-			x_mouse = 100
+		if x_mouse < 60:
+			x_mouse = 60
 		if x_mouse > 250:
 			x_mouse = 250
 		if y_mouse < 370:
@@ -120,7 +119,8 @@ class Agent():
 		#normalize input
 		states = np.asarray(states, dtype=np.float32)/255.0
 		#normalize rewards
-		advantages = (advantages - np.mean(advantages)) / (np.std(advantages) + 1e-10)
+		#advantages = (advantages - np.mean(advantages)) / (np.std(advantages) + 1e-10)
+
 
 		batch_feed = {self.input_state: states,
 					  self.input_act: actions,
@@ -168,16 +168,18 @@ class Agent():
 
 
 		#Another version 
-		log_prob = tf.log(self.actions)
+		log_prob = tf.log(tf.clip_by_value(self.actions,1e-10,1.0))
 		indices = tf.range(0, tf.shape(log_prob)[0]) * tf.shape(log_prob)[1] + self.input_act
 		act_prob = tf.gather(tf.reshape(log_prob, [-1]), indices)
 
 
 		self.loss = -tf.reduce_sum(tf.multiply(act_prob, tf_discounted_epr))
 
-		self.loss = tf.Print(self.loss, [act_prob], message='act_prob:')
-		self.loss = tf.Print(self.loss, [tf_discounted_epr], message='epr:')
-
+		#self.loss = tf.Print(self.loss, [tf_discounted_epr], summarize = 500, message="discounted_epr: ")
+		#self.loss = tf.Print(self.loss, [self.input_act], summarize = 500, message="\input_act: ")
+		#self.loss = tf.Print(self.loss, [log_prob], summarize = 500, message="\nlog_prob: ")
+		#self.loss = tf.Print(self.loss, [act_prob], summarize = 500, message="\nact_prob: ")
+		
 		optimizer = tf.train.RMSPropOptimizer(self.learning_rate)
 		self.train = optimizer.minimize(self.loss)
 
@@ -193,33 +195,37 @@ class Agent():
 		with tf.variable_scope(name): 
 			net = []
 
-			conv1 = tf.contrib.layers.conv2d(input, 512, 5, stride=3, scope='conv1')
-			conv1 = tf.contrib.layers.batch_norm(conv1, scope='bn1')
-			conv1 = tf.nn.relu(conv1)
-			net.append(conv1)
+			# conv1 = tf.contrib.layers.conv2d(input, 512, 5, stride=3, scope='conv1')
+			# conv1 = tf.contrib.layers.batch_norm(conv1, scope='bn1')
+			# conv1 = tf.nn.relu(conv1)
+			# net.append(conv1)
 
-			conv2 = tf.contrib.layers.conv2d(conv1, 256, 3, stride=2, scope='conv2')
-			conv2 = tf.contrib.layers.batch_norm(conv2, scope='bn2')
-			conv2 = tf.nn.relu(conv2)
-			net.append(conv2)
+			# conv2 = tf.contrib.layers.conv2d(conv1, 256, 3, stride=2, scope='conv2')
+			# conv2 = tf.contrib.layers.batch_norm(conv2, scope='bn2')
+			# conv2 = tf.nn.relu(conv2)
+			# net.append(conv2)
 
-			conv3 = tf.contrib.layers.conv2d(conv2, 128, 3, stride=2, scope='conv3')
-			conv3 = tf.contrib.layers.batch_norm(conv3, scope='bn3')
-			conv3 = tf.nn.relu(conv3)
-			net.append(conv3)
+			# conv3 = tf.contrib.layers.conv2d(conv2, 128, 3, stride=2, scope='conv3')
+			# conv3 = tf.contrib.layers.batch_norm(conv3, scope='bn3')
+			# conv3 = tf.nn.relu(conv3)
+			# net.append(conv3)
 
-			conv4 = tf.contrib.layers.conv2d(conv3, 64, 3, stride=2, scope='conv4')
-			conv4 = tf.contrib.layers.batch_norm(conv4, scope='bn4')
-			conv4 = tf.nn.relu(conv4)
-			net.append(conv4)
+			# conv4 = tf.contrib.layers.conv2d(conv3, 64, 3, stride=2, scope='conv4')
+			# conv4 = tf.contrib.layers.batch_norm(conv4, scope='bn4')
+			# conv4 = tf.nn.relu(conv4)
+			# net.append(conv4)
 
-			flattened = tf.contrib.layers.flatten(conv4, scope='flattened')
+			flattened = tf.contrib.layers.flatten(input, scope='flattened')
 			fc1 = tf.contrib.layers.fully_connected(flattened, 512, 
 													activation_fn=tf.nn.relu,
 													scope='fc1')
+			#fc1 = tf.contrib.layers.batch_norm(fc1, scope='bn5')
+
 			fc2 = tf.contrib.layers.fully_connected(fc1, 256, 
 													activation_fn=tf.nn.relu,
 													scope='fc2')
+			#fc2 = tf.contrib.layers.batch_norm(fc2, scope='bn6')
+
 			fc3 = tf.contrib.layers.fully_connected(fc2, self.action_num, 
 													activation_fn=None,
 													scope='fc3')

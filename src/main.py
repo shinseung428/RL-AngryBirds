@@ -82,6 +82,8 @@ WHITE = (255, 255, 255)
 sling_x, sling_y = 135, 450
 sling2_x, sling2_y = 160, 450
 score = 0
+total_reward = 0
+tmp_reward = 0
 game_state = 0
 bird_path = []
 counter = 0
@@ -192,12 +194,13 @@ def draw_level_cleared():
     """Draw level cleared"""
     global game_state
     global bonus_score_once
-    global score
+    global score, tmp_reward
     # level_cleared = bold_font3.render("Level Cleared!", 1, WHITE)
     # score_level_cleared = bold_font2.render(str(score), 1, WHITE)
     if level.number_of_birds >= 0 and len(pigs) == 0:
         if bonus_score_once:
             score += (level.number_of_birds-1) * 10
+            tmp_reward = (level.number_of_birds-1) * 10
         bonus_score_once = False
         game_state = 4
         # rect = pygame.Rect(300, 0, 600, 800)
@@ -275,8 +278,9 @@ def post_solve_bird_pig(arbiter, space, _):
         if pig_body == pig.body:
             pig.life -= 20
             pigs_to_remove.append(pig)
-            global score
-            score += 1
+            global score, tmp_reward
+            score += 10
+            tmp_reward = 10
     for pig in pigs_to_remove:
         space.remove(pig.shape, pig.shape.body)
         pigs.remove(pig)
@@ -299,8 +303,9 @@ def post_solve_bird_wood(arbiter, space, _):
             if poly in beams:
                 beams.remove(poly)
         space.remove(b, b.body)
-        global score
+        global score, tmp_reward
         score += 5
+        tmp_reward = 5
 
 
 def post_solve_pig_wood(arbiter, space, _):
@@ -311,8 +316,9 @@ def post_solve_pig_wood(arbiter, space, _):
         for pig in pigs:
             if pig_shape == pig.shape:
                 pig.life -= 20
-                global score
+                global score, tmp_reward
                 score += 10
+                tmp_reward = 10
                 if pig.life <= 0:
                     pigs_to_remove.append(pig)
     for pig in pigs_to_remove:
@@ -561,17 +567,29 @@ while running:
     states.append(input_state)
     #actions.append(action)
     actions.append(action)
-    rewards.append(score)
-
+    rewards.append(tmp_reward)
+    
+    total_reward += tmp_reward
+    tmp_reward = 0
     prev_state = state
 
     #check if episode finished
     if len(states) == config.batch_size:
         # processed_rewards = process_rewards(rewards)
 
-        
+
+        #fill all action rewards with negative 1 reward if level failed with score 0
+        #if score == 0:
+        #    rewards = np.asarray(rewards) - 1
+
+        #add all action rewards with the final score if level succeeded
+        if game_state == 4:
+            rewards = np.asarray(rewards) + score
+        else:
+            rewards = np.asarray(rewards) - score
+
         loss = slingshot_agent.update_model(states, np.vstack(actions), np.vstack(rewards), game_counter)
-        print "Games played: [%d] Loss: [%f]" % (game_counter, loss)
+        print "Games played: [%d] Reward: [%f]" % (game_counter, score)
         game_counter += 1
 
         #automatically restart failed level
