@@ -569,15 +569,14 @@ while running:
     actions.append(action)
     rewards.append(tmp_reward)
     
-    total_reward += tmp_reward
+    
     tmp_reward = 0
     prev_state = state
 
     #check if episode finished
     if len(states) == config.batch_size:
+        game_counter += 1
         # processed_rewards = process_rewards(rewards)
-
-
         #fill all action rewards with negative 1 reward if level failed with score 0
         #if score == 0:
         #    rewards = np.asarray(rewards) - 1
@@ -588,9 +587,11 @@ while running:
         else:
             rewards = np.asarray(rewards) - score
 
+        total_reward += score
+
         loss = slingshot_agent.update_model(states, np.vstack(actions), np.vstack(rewards), game_counter)
-        print "Games played: [%d] Reward: [%f]" % (game_counter, score)
-        game_counter += 1
+        print "Games played: [%d] Reward: [%f] Average Reward: [%f]" % (game_counter, score, total_reward/game_counter)
+        
 
         #automatically restart failed level
         if game_state == 3:
