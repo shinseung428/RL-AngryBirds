@@ -1,0 +1,4 @@
+model_checkpoint_path: "slingshotmodel-150"
+all_model_checkpoint_paths: "slingshotmodel-50"
+all_model_checkpoint_paths: "slingshotmodel-100"
+all_model_checkpoint_paths: "slingshotmodel-150"

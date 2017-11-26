@@ -72,7 +72,6 @@ angle = 0
 x_mouse = 0
 y_mouse = 0
 count = 0
-mouse_pressed = False
 t1 = 0
 tick_to_next_circle = 10
 RED = (255, 0, 0)
@@ -142,11 +141,7 @@ def distance(xo, yo, x, y):
     return d
 
 
-# def load_music():
-#     """Load the music"""
-#     song1 = '../resources/sounds/angry-birds.mp3'
-#     pygame.mixer.music.load(song1)
-#     pygame.mixer.music.play(-1)
+
 
 
 def sling_action():
@@ -333,14 +328,14 @@ space.add_collision_handler(0, 2).post_solve=post_solve_bird_wood
 # pig and wood
 space.add_collision_handler(1, 2).post_solve=post_solve_pig_wood
 
-# load_music()
+
 level = Level(pigs, columns, beams, space)
-level.number = 0
+level.number = np.random.randint(0,12)
 level.load_level()
 
 
 #######newly added config for the game#######
-redbird_init_pos = (130, 450)
+redbird_init_pos = (135, 450)
 ready_flag = True
 mouse_pressed = True
 x_mouse, y_mouse = redbird_init_pos
@@ -403,7 +398,8 @@ while running:
     state = pygame.surfarray.array3d(screen)
     state = cv2.resize(state, (config.screen_h, config.screen_w))
     state = np.flip(np.rot90(state, k=-1),1)
-
+    state = cv2.cvtColor(state, cv2.COLOR_BGR2RGB)
+    
     if prev_state == None:
         prev_state = state
     
@@ -564,14 +560,17 @@ while running:
     
     label = np.zeros_like(output) ; label[action] = 1
 
-    states.append(input_state)
+    states.append(state)
     #actions.append(action)
     actions.append(action)
-    rewards.append(tmp_reward)
+    rewards.append(0)
     
-    
+    show_state = cv2.resize(state, (config.screen_w*4, config.screen_h*4))
+    cv2.imshow('input',show_state)
+    cv2.waitKey(1)    
     tmp_reward = 0
     prev_state = state
+
 
     #check if episode finished
     if len(states) == config.batch_size:
@@ -579,13 +578,13 @@ while running:
         # processed_rewards = process_rewards(rewards)
         #fill all action rewards with negative 1 reward if level failed with score 0
         #if score == 0:
-        #    rewards = np.asarray(rewards) - 1
+        #    rewards = np.asarray(rewards) - 10
 
         #add all action rewards with the final score if level succeeded
         if game_state == 4:
             rewards = np.asarray(rewards) + score
         else:
-            rewards = np.asarray(rewards) - score
+            rewards = np.asarray(rewards) - 10
 
         total_reward += score
 
@@ -610,7 +609,7 @@ while running:
             restart()
             level.number += 1
             if level.number == 10:
-                level.number = 0
+                level.number = np.random.randint(0,12)
             game_state = 0
             level.load_level()
             score = 0

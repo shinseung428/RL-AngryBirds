@@ -98,7 +98,7 @@ class Agent():
 		elif action == 2:
 			mouse_pressed = False
 			#reset the position of the mouse to the center point of the slingshot
-			x_mouse, y_mouse = (130, 450)
+			x_mouse, y_mouse = (135, 450)
 		# elif action == 5:#do nothing
 		# 	mouse_pressed = True
 		# 	pass		
@@ -110,8 +110,8 @@ class Agent():
 			x_mouse = 250
 		if y_mouse < 370:
 			y_mouse = 370
-		if y_mouse > 550:
-			y_mouse = 550
+		if y_mouse > 520:
+			y_mouse = 520
 
 		return action, x_mouse, y_mouse, mouse_pressed, output[0]
 
@@ -195,27 +195,27 @@ class Agent():
 		with tf.variable_scope(name): 
 			net = []
 
-			# conv1 = tf.contrib.layers.conv2d(input, 512, 5, stride=3, scope='conv1')
-			# conv1 = tf.contrib.layers.batch_norm(conv1, scope='bn1')
-			# conv1 = tf.nn.relu(conv1)
-			# net.append(conv1)
+			conv1 = tf.contrib.layers.conv2d(input, 512, 5, stride=3, scope='conv1')
+			conv1 = tf.contrib.layers.batch_norm(conv1, scope='bn1')
+			conv1 = tf.nn.relu(conv1)
+			net.append(conv1)
 
-			# conv2 = tf.contrib.layers.conv2d(conv1, 256, 3, stride=2, scope='conv2')
-			# conv2 = tf.contrib.layers.batch_norm(conv2, scope='bn2')
-			# conv2 = tf.nn.relu(conv2)
-			# net.append(conv2)
+			conv2 = tf.contrib.layers.conv2d(conv1, 256, 3, stride=2, scope='conv2')
+			conv2 = tf.contrib.layers.batch_norm(conv2, scope='bn2')
+			conv2 = tf.nn.relu(conv2)
+			net.append(conv2)
 
-			# conv3 = tf.contrib.layers.conv2d(conv2, 128, 3, stride=2, scope='conv3')
-			# conv3 = tf.contrib.layers.batch_norm(conv3, scope='bn3')
-			# conv3 = tf.nn.relu(conv3)
-			# net.append(conv3)
+			conv3 = tf.contrib.layers.conv2d(conv2, 128, 3, stride=2, scope='conv3')
+			conv3 = tf.contrib.layers.batch_norm(conv3, scope='bn3')
+			conv3 = tf.nn.relu(conv3)
+			net.append(conv3)
 
-			# conv4 = tf.contrib.layers.conv2d(conv3, 64, 3, stride=2, scope='conv4')
-			# conv4 = tf.contrib.layers.batch_norm(conv4, scope='bn4')
-			# conv4 = tf.nn.relu(conv4)
-			# net.append(conv4)
+			conv4 = tf.contrib.layers.conv2d(conv3, 64, 3, stride=2, scope='conv4')
+			conv4 = tf.contrib.layers.batch_norm(conv4, scope='bn4')
+			conv4 = tf.nn.relu(conv4)
+			net.append(conv4)
 
-			flattened = tf.contrib.layers.flatten(input, scope='flattened')
+			flattened = tf.contrib.layers.flatten(conv4, scope='flattened')
 			fc1 = tf.contrib.layers.fully_connected(flattened, 512, 
 													activation_fn=tf.nn.relu,
 													scope='fc1')
