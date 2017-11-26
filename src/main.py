@@ -266,8 +266,8 @@ def post_solve_bird_pig(arbiter, space, _):
     p = to_pygame(bird_body.position)
     p2 = to_pygame(pig_body.position)
     r = 30
-    pygame.draw.circle(surface, BLACK, p, r, 4)
-    pygame.draw.circle(surface, RED, p2, r, 4)
+    #pygame.draw.circle(surface, BLACK, p, r, 4)
+    #pygame.draw.circle(surface, RED, p2, r, 4)
     pigs_to_remove = []
     for pig in pigs:
         if pig_body == pig.body:
@@ -399,11 +399,12 @@ while running:
     state = cv2.resize(state, (config.screen_h, config.screen_w))
     state = np.flip(np.rot90(state, k=-1),1)
     state = cv2.cvtColor(state, cv2.COLOR_BGR2RGB)
-    
+
     if prev_state == None:
         prev_state = state
     
-    input_state = state - prev_state
+    #input_state = state - prev_state
+    input_state = state
 
     
     action, x_mouse, y_mouse, mouse_pressed, output = slingshot_agent.get_action(input_state, x_mouse, y_mouse, mouse_pressed)
@@ -467,8 +468,8 @@ while running:
         x -= 22
         y -= 20
         screen.blit(redbird, (x, y))
-        pygame.draw.circle(screen, BLUE,
-                           p, int(bird.shape.radius), 2)
+        #pygame.draw.circle(screen, BLUE,
+        #                   p, int(bird.shape.radius), 2)
         if counter >= 3 and time.time() - t1 < 5:
             bird_path.append(p)
             restart_counter = True
@@ -508,7 +509,7 @@ while running:
         x -= w*0.5
         y -= h*0.5
         screen.blit(img, (x, y))
-        pygame.draw.circle(screen, BLUE, p, int(pig.radius), 2)
+        #pygame.draw.circle(screen, BLUE, p, int(pig.radius), 2)
     # Draw columns and Beams
     for column in columns:
         column.draw_poly('columns', screen)
@@ -560,12 +561,12 @@ while running:
     
     label = np.zeros_like(output) ; label[action] = 1
 
-    states.append(state)
+    states.append(input_state)
     #actions.append(action)
     actions.append(action)
     rewards.append(0)
     
-    show_state = cv2.resize(state, (config.screen_w*4, config.screen_h*4))
+    show_state = cv2.resize(input_state, (config.screen_w*4, config.screen_h*4))
     cv2.imshow('input',show_state)
     cv2.waitKey(1)    
     tmp_reward = 0
