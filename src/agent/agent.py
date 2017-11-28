@@ -35,9 +35,6 @@ class Agent():
 
 
 	def get_action(self, state, x_mouse, y_mouse, mouse_pressed):
-		def softmax(x):
-			e_x = np.exp(x-np.max(x))
-			return e_x / e_x.sum(axis=0)
 		# possible action list:
 		# 0 : mouseON and move + towards x axis
 		# 1 : mouseON and move - towards x axis
@@ -56,32 +53,6 @@ class Agent():
 
 		action = np.random.choice(self.action_num, p=output[0])
 
-		# if epsilon > np.random.uniform(0,1):
-		# 	action = np.argmax(output[0])
-			
-		# else:
-		# 	action = np.random.randint(6, size=(1))[0]
-
-
-		# if action == 0:
-		# 	mouse_pressed = True
-		# 	x_mouse += xy_distance
-		# elif action == 1:
-		# 	mouse_pressed = True
-		# 	x_mouse -= xy_distance
-		# elif action == 2:
-		# 	mouse_pressed = True
-		# 	y_mouse += xy_distance
-		# elif action == 3:
-		# 	mouse_pressed = True
-		# 	y_mouse -= xy_distance
-		# elif action == 4:
-		# 	mouse_pressed = False
-		# 	#reset the position of the mouse to the center point of the slingshot
-		# 	x_mouse, y_mouse = (130, 450)
-		# elif action == 5:#do nothing
-		# 	mouse_pressed = True
-		# 	pass
 
 		if action == 0:
 			mouse_pressed = True
@@ -89,19 +60,11 @@ class Agent():
 		elif action == 1:
 			mouse_pressed = True
 			y_mouse += xy_distance
-		# elif action == 2:
-		# 	mouse_pressed = True
-		# 	y_mouse += xy_distance
-		# elif action == 3:
-		# 	mouse_pressed = True
-		# 	y_mouse -= xy_distance
 		elif action == 2:
 			mouse_pressed = False
 			#reset the position of the mouse to the center point of the slingshot
 			x_mouse, y_mouse = (135, 450)
-		# elif action == 5:#do nothing
-		# 	mouse_pressed = True
-		# 	pass		
+
 
 		#bound the movement of the mouse
 		if x_mouse < 60:
@@ -118,13 +81,11 @@ class Agent():
 	def update_model(self, states, actions, advantages, counter):
 		#normalize input
 		states = np.asarray(states, dtype=np.float32)/255.0
-		#normalize rewards
-		#advantages = (advantages - np.mean(advantages)) / (np.std(advantages) + 1e-10)
-
 
 		batch_feed = {self.input_state: states,
 					  self.input_act: actions,
 					  self.input_adv: advantages}
+
 		loss, summary, _ = self.sess.run([self.loss, self.summary, self.train], feed_dict=batch_feed)
 		self.writer.add_summary(summary, counter)
 
@@ -133,11 +94,10 @@ class Agent():
 	def build_model(self):
 
 		self.input_state = tf.placeholder(tf.float32, shape=self.input_shape)
-		self.net, self.actions = self.Policy_Network(self.input_state)
-
-		
 		self.input_act = tf.placeholder(tf.int32, shape=[None, 1])
 		self.input_adv = tf.placeholder(tf.float32, shape=[None, 1])
+
+		self.net, self.actions = self.Policy_Network(self.input_state)
 
 		self.trainable_vars = tf.trainable_variables()
 
@@ -175,10 +135,10 @@ class Agent():
 
 		self.loss = -tf.reduce_sum(tf.multiply(act_prob, tf_discounted_epr))
 
-		#self.loss = tf.Print(self.loss, [tf_discounted_epr], summarize = 500, message="discounted_epr: ")
-		#self.loss = tf.Print(self.loss, [self.input_act], summarize = 500, message="\input_act: ")
-		#self.loss = tf.Print(self.loss, [log_prob], summarize = 500, message="\nlog_prob: ")
-		#self.loss = tf.Print(self.loss, [act_prob], summarize = 500, message="\nact_prob: ")
+		self.loss = tf.Print(self.loss, [tf_discounted_epr], summarize = 400, message="discounted_epr: ")
+		self.loss = tf.Print(self.loss, [self.input_act], summarize = 400, message="\input_act: ")
+		self.loss = tf.Print(self.loss, [log_prob], summarize = 400, message="\nlog_prob: ")
+		self.loss = tf.Print(self.loss, [act_prob], summarize = 400, message="\nact_prob: ")
 		
 		optimizer = tf.train.RMSPropOptimizer(self.learning_rate)
 		self.train = optimizer.minimize(self.loss)

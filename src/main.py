@@ -369,30 +369,6 @@ batches = []
 prev_state = None
 #Start game model
 while running:
-    # event = pygame.event.get()
-
-    # Input handling
-    # for e in pygame.event.get():
-    #     if e.type == pygame.KEYDOWN and e.key == pygame.K_DOWN:
-    #         epsilon -= 0.05   
-    #         if epsilon < 0:
-    #             epsilon = 0.0
-    #     elif e.type == pygame.KEYDOWN and e.key == pygame.K_UP:
-    #         epsilon += 0.05
-    #         if epsilon > 1:
-    #             epsilon = 1.0
-    #     elif e.type == pygame.KEYDOWN and e.key == pygame.K_LEFT:
-    #         fps_controller -= 1
-    #         if fps_controller < 10:
-    #             fps_controller = 10
-    #     elif e.type == pygame.KEYDOWN and e.key == pygame.K_RIGHT:
-    #         fps_controller += 1
-    #         if fps_controller > 50:
-    #             fps_controller = 50
-
-
-    
-
     #read current state(screen input)
     #get pygame screen data into numpy array
     state = pygame.surfarray.array3d(screen)
@@ -401,16 +377,13 @@ while running:
     state = cv2.cvtColor(state, cv2.COLOR_BGR2RGB)
 
     #if prev_state == None:
-    #    prev_state = state
-    
+    #    prev_state = state    
     #input_state = state - prev_state
+    
     input_state = state
-
     
     action, x_mouse, y_mouse, mouse_pressed, output = slingshot_agent.get_action(input_state, x_mouse, y_mouse, mouse_pressed)
 
-    # print action, mouse_pressed
-    
     if not mouse_pressed:   
         # Release new bird
         mouse_pressed = False
@@ -438,9 +411,7 @@ while running:
     # Draw first part of the sling
     rect = pygame.Rect(50, 0, 70, 220)
     screen.blit(sling_image, (138, 420), rect)
-    # Draw the trail left behind
-    # for point in bird_path:
-    #     pygame.draw.circle(screen, WHITE, point, 5, 0)
+
     # Draw the birds in the wait line
     if level.number_of_birds > 0:
         for i in range(level.number_of_birds-1):
@@ -468,8 +439,6 @@ while running:
         x -= 22
         y -= 20
         screen.blit(redbird, (x, y))
-        #pygame.draw.circle(screen, BLUE,
-        #                   p, int(bird.shape.radius), 2)
         if counter >= 3 and time.time() - t1 < 5:
             bird_path.append(p)
             restart_counter = True
@@ -495,7 +464,6 @@ while running:
     # Draw pigs
     for pig in pigs:
         i += 1
-        # print (i,pig.life)
         pig = pig.shape
         if pig.body.position.y < 0:
             pigs_to_remove.append(pig)
@@ -509,7 +477,7 @@ while running:
         x -= w*0.5
         y -= h*0.5
         screen.blit(img, (x, y))
-        #pygame.draw.circle(screen, BLUE, p, int(pig.radius), 2)
+
     # Draw columns and Beams
     for column in columns:
         column.draw_poly('columns', screen)
@@ -537,13 +505,9 @@ while running:
     game_num = font.render(str(game_counter), 1, BLACK)
     screen.blit(game_str, (5,10))
     screen.blit(game_num, (75,10))
-    # game_str = font.render("epsilon:", 1, BLACK)
-    # game_num = font.render(str(epsilon), 1, BLACK)
-    # screen.blit(game_str, (120,10))
-    # screen.blit(game_num, (180,10))    
+
     str_output = '[{:s}]'.format(', '.join(['{:.4f}'.format(x) for x in output]))
     str_output = str_output.replace(',', '       ')
-    #actoin_str = font.render("action_prob:       +x                -x              +y              -y             release     do nothing", 1, BLACK)
     actoin_str = font.render("action_prob:       -x              +y              release", 1, BLACK)
     screen.blit(actoin_str, (300, 10))
     action_prob = font.render(str_output, 1, BLACK)
@@ -556,17 +520,12 @@ while running:
     #controls the frame rate
     clock.tick(fps_controller)
     pygame.display.set_caption("fps: " + str(clock.get_fps()))
-    
-
-    
+        
     label = np.zeros_like(output) ; label[action] = 1
 
-
-    if level.number_of_birds != 0:
-        states.append(input_state)
-        #actions.append(action)
-        actions.append(action)
-        rewards.append(0)
+    states.append(input_state)
+    actions.append(action)
+    rewards.append(0)
     
     print len(states)
 
@@ -580,15 +539,12 @@ while running:
     #check if episode finished
     if len(states) == config.batch_size:
         game_counter += 1
-        # processed_rewards = process_rewards(rewards)
-        #fill all action rewards with negative 1 reward if level failed with score 0
-        #if score == 0:
-        #    rewards = np.asarray(rewards) - 10
 
         #add all action rewards with the final score if level succeeded
         if game_state == 4:
             rewards = np.asarray(rewards) + score
         else:
+            #else give -10 as a reward
             rewards = np.asarray(rewards) - 10
 
         total_reward += score
