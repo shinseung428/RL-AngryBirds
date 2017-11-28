@@ -400,8 +400,8 @@ while running:
     state = np.flip(np.rot90(state, k=-1),1)
     state = cv2.cvtColor(state, cv2.COLOR_BGR2RGB)
 
-    if prev_state == None:
-        prev_state = state
+    #if prev_state == None:
+    #    prev_state = state
     
     #input_state = state - prev_state
     input_state = state
