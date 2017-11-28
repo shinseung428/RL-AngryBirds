@@ -519,8 +519,6 @@ while running:
     states.append(input_state)
     actions.append(action)
     rewards.append(0)
-    
-    print len(states)
 
     show_state = cv2.resize(input_state, (config.screen_w*4, config.screen_h*4))
 
