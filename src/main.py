@@ -349,23 +349,16 @@ fps_controller = 50
 #############################################
 
 #######Agent setting#######
-def process_rewards(rews):
-    """Rewards -> Advantages for one episode. """
-    # total reward: length of episode
-    return [len(rews)] * len(rews)
-
 slingshot_agent = Agent(config)
 
 if config.continue_training == 'True':
     game_counter = slingshot_agent.reload()
 else:
     game_counter = 0
-# input('agent created')
-# epsilon = config.epsilon
+
 states, actions, rewards = [], [], []
 ###########################
 batches = []
-
 prev_state = None
 #Start game model
 while running:
@@ -530,11 +523,14 @@ while running:
     print len(states)
 
     show_state = cv2.resize(input_state, (config.screen_w*4, config.screen_h*4))
+
+    #display what's fed into the network
     cv2.imshow('input',show_state)
-    cv2.waitKey(1)    
+    cv2.waitKey(1)
+
+
     tmp_reward = 0
     prev_state = state
-
 
     #check if episode finished
     if len(states) == config.batch_size:
