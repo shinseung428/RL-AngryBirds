@@ -508,7 +508,7 @@ while running:
     
     draw_level_cleared()
     draw_level_failed()
-    pygame.display.flip()
+    #pygame.display.flip()
 
     #controls the frame rate
     clock.tick(fps_controller)
